@@ -1,0 +1,36 @@
+# Environment variables
+.env
+config/.env
+*.env
+
+# Go binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/bin/
+/tmp/
+
+# Go test & coverage
+*.test
+*.out
+coverage.html
+
+# Go vendor (optional)
+# vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build output
+/build/
+/dist/
