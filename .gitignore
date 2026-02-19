@@ -38,3 +38,7 @@ Thumbs.db
 # Build output
 /build/
 /dist/
+
+# Frontend
+frontend/node_modules/
+frontend/.next/

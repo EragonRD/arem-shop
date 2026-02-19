@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"arem-shop/internal/dto"
-	"arem-shop/internal/repository"
+	"arem-shop/internal/models"
 	"arem-shop/internal/utils"
 
 	"github.com/google/uuid"
@@ -16,11 +16,19 @@ import (
 var ErrInvalidShopWhatsApp = errors.New("invalid shop whatsapp number")
 
 type PublicService struct {
-	shopRepo    *repository.ShopRepository
-	productRepo *repository.ProductRepository
+	shopRepo    publicServiceShopRepository
+	productRepo publicServiceProductRepository
 }
 
-func NewPublicService(shopRepo *repository.ShopRepository, productRepo *repository.ProductRepository) *PublicService {
+type publicServiceShopRepository interface {
+	FindByID(ctx context.Context, shopID uuid.UUID) (*models.Shop, error)
+}
+
+type publicServiceProductRepository interface {
+	ListByShopID(ctx context.Context, shopID uuid.UUID) ([]models.Product, error)
+}
+
+func NewPublicService(shopRepo publicServiceShopRepository, productRepo publicServiceProductRepository) *PublicService {
 	return &PublicService{
 		shopRepo:    shopRepo,
 		productRepo: productRepo,

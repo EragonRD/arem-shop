@@ -1,0 +1,40 @@
+import type { ProductViewModel } from "@/lib/types";
+
+export const mockProductsSeed: ProductViewModel[] = [
+  {
+    id: "p-100",
+    name: "Arem Laptop Pro",
+    description: "Ultrabook 16GB RAM / 512GB SSD",
+    category: "Laptops",
+    purchasePrice: 800,
+    sellingPrice: 999.99,
+    stock: 15,
+    imageURL: "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=1200",
+    shopID: "11111111-1111-1111-1111-111111111111",
+    createdAt: "2026-02-19T10:00:00Z",
+  },
+  {
+    id: "p-101",
+    name: "Arem Phone X",
+    description: "Smartphone OLED 128GB",
+    category: "Smartphones",
+    purchasePrice: 520,
+    sellingPrice: 699.5,
+    stock: 23,
+    imageURL: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1200",
+    shopID: "11111111-1111-1111-1111-111111111111",
+    createdAt: "2026-02-19T10:05:00Z",
+  },
+  {
+    id: "p-102",
+    name: "Arem Headset Air",
+    description: "Noise cancelling headset",
+    category: "Audio",
+    purchasePrice: 120,
+    sellingPrice: 189.99,
+    stock: 30,
+    imageURL: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=1200",
+    shopID: "11111111-1111-1111-1111-111111111111",
+    createdAt: "2026-02-19T10:12:00Z",
+  },
+];

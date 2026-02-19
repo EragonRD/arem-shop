@@ -72,10 +72,10 @@ docs
 
 ```bash
 cp .env.example .env        # Créer la configuration locale
-docker-compose up --build    # Build + lancement (API + PostgreSQL)
+docker-compose up --build    # Build + launch (API + PostgreSQL + Frontend)
 ```
 
-L'API est prête sur `http://localhost:8080` — la migration SQL s'applique automatiquement au premier lancement.
+API is available on `http://localhost:8080` and frontend on `http://localhost:3000`.
 
 ```bash
 curl http://localhost:8080/health   # Vérifier que tout fonctionne
@@ -167,11 +167,15 @@ Reference: `config/.env.example`.
 - `APP_NAME` nom app
 - `APP_ENV` environment (`development`, `production`, ...)
 - `APP_PORT` port HTTP
+- `CORS_ALLOWED_ORIGINS` liste des origins frontend autorisees (CSV)
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSLMODE`, `DB_TIMEZONE`
 - `JWT_SECRET` secret de signature JWT (obligatoire)
 - `JWT_TTL_HOURS` duree de vie token
 - `BCRYPT_COST` cout bcrypt
 - `LOW_STOCK_THRESHOLD` seuil dashboard low stock
+- `FRONTEND_PORT` port service frontend Docker
+- `NEXT_PUBLIC_API_BASE_URL` base URL API utilisee par le frontend
+- `NEXT_PUBLIC_DATA_MODE` mode frontend (`mock` ou `api`)
 
 ## 8) Bootstrap initial (premier shop + premier SuperAdmin)
 
@@ -659,3 +663,62 @@ Le coeur metier principal est present, mais certains modules restent a etendre:
 ## 17) License
 
 Usage interne projet.
+
+## 18) Frontend (Person 4)
+
+The project now includes a Next.js frontend in `frontend/` with a Rackoon-like visual direction and Arem temporary branding.
+
+### 18.1 Pages
+
+- `/login`
+- `/dashboard` (SuperAdmin financial view)
+- `/products`
+- `/products/new`
+- `/products/:id/edit`
+- `/transactions/new`
+- `/public/:shopID`
+
+### 18.2 Local frontend run (without Docker)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend is available at `http://localhost:3000`.
+
+### 18.3 Docker run (API + DB + Frontend)
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+- API: `http://localhost:8080`
+- Frontend: `http://localhost:3000`
+
+### 18.4 CORS and API connection
+
+- Backend reads `CORS_ALLOWED_ORIGINS` (default: `http://localhost:3000`).
+- Frontend reads:
+  - `NEXT_PUBLIC_API_BASE_URL`
+  - `NEXT_PUBLIC_DATA_MODE=mock|api`
+
+### 18.5 Auth and token flow
+
+- Login stores JWT in `localStorage` (`arem_token`) and user info in `arem_user`.
+- Private pages redirect to `/login` if token/session is missing.
+- In `api` mode, frontend adds `Authorization: Bearer <token>` on protected calls.
+- On `401`, frontend clears local session and forces re-login.
+
+### 18.6 Product visibility rules in UI
+
+- `Admin`: purchase price is hidden and cannot be submitted in forms.
+- `SuperAdmin`: purchase price is visible and editable.
+
+### 18.7 Public catalog behavior
+
+- Public storefront uses `/public/:shopID/products`.
+- No authentication required.
+- Purchase price is never shown.
