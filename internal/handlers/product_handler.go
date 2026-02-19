@@ -170,6 +170,8 @@ func (h *ProductHandler) Delete(c *gin.Context) {
 			respondProductError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, services.ErrProductNotFound):
 			respondProductError(c, http.StatusNotFound, err.Error())
+		case errors.Is(err, services.ErrProductHasTransactions):
+			respondProductError(c, http.StatusConflict, err.Error())
 		default:
 			respondProductError(c, http.StatusInternalServerError, "failed to delete product")
 		}

@@ -9,6 +9,7 @@ import (
 	"arem-shop/internal/models"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgconn"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -347,5 +348,18 @@ func TestProductService_Delete_NotFound(t *testing.T) {
 	err := service.Delete(context.Background(), shopID.String(), productID.String())
 	if !errors.Is(err, ErrProductNotFound) {
 		t.Fatalf("expected ErrProductNotFound, got %v", err)
+	}
+}
+
+func TestProductService_Delete_ProductLinkedToTransactions(t *testing.T) {
+	shopID := uuid.New()
+	productID := uuid.New()
+	service := NewProductService(&fakeProductServiceRepo{
+		deleteErr: &pgconn.PgError{Code: "23503"},
+	})
+
+	err := service.Delete(context.Background(), shopID.String(), productID.String())
+	if !errors.Is(err, ErrProductHasTransactions) {
+		t.Fatalf("expected ErrProductHasTransactions, got %v", err)
 	}
 }

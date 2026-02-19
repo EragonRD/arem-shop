@@ -9,6 +9,7 @@ import (
 	"arem-shop/internal/models"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgconn"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -22,6 +23,7 @@ var (
 	ErrPurchasePriceForbidden = errors.New("purchasePrice is not allowed for Admin")
 	ErrSellingPriceNegative   = errors.New("sellingPrice must be greater than 0")
 	ErrStockNegative          = errors.New("stock cannot be negative")
+	ErrProductHasTransactions = errors.New("cannot delete product with existing transactions")
 	ErrInvalidProductName     = errors.New("name is required")
 	ErrInvalidProductCategory = errors.New("category is required")
 )
@@ -203,6 +205,9 @@ func (s *ProductService) Delete(ctx context.Context, shopID, productID string) e
 
 	deleted, err := s.productRepo.DeleteByIDAndShopID(ctx, productUUID, shopUUID)
 	if err != nil {
+		if isForeignKeyViolation(err) {
+			return ErrProductHasTransactions
+		}
 		return err
 	}
 	if !deleted {
@@ -210,6 +215,14 @@ func (s *ProductService) Delete(ctx context.Context, shopID, productID string) e
 	}
 
 	return nil
+}
+
+func isForeignKeyViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23503"
+	}
+	return false
 }
 
 func validateProductCreateInput(role models.UserRole, req dto.CreateProductRequest) error {
