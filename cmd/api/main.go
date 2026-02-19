@@ -84,7 +84,8 @@ func main() {
 	private.POST("/products", productHandler.Create)
 	private.PUT("/products/:id", productHandler.Update)
 	private.DELETE("/products/:id", productHandler.Delete)
-	private.POST("/transactions", transactionHandler.Create)
+	//private.POST("/transactions", transactionHandler.Create)
+	private.POST("/transactions", transactionHandler.CreateTransaction)
 
 	superAdminPrivate := router.Group("/")
 	superAdminPrivate.Use(
