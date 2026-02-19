@@ -363,3 +363,81 @@ func TestProductService_Delete_ProductLinkedToTransactions(t *testing.T) {
 		t.Fatalf("expected ErrProductHasTransactions, got %v", err)
 	}
 }
+
+func TestProductService_GetByID_RoleBasedResponseShape(t *testing.T) {
+	shopID := uuid.New()
+	productID := uuid.New()
+	repo := &fakeProductServiceRepo{
+		findProduct: &models.Product{
+			ID:            productID,
+			Name:          "Console",
+			Description:   "Gaming console",
+			Category:      "Gaming",
+			PurchasePrice: decimal.RequireFromString("300.00"),
+			SellingPrice:  decimal.RequireFromString("450.00"),
+			Stock:         6,
+			ImageURL:      "https://example.com/console.jpg",
+			ShopID:        shopID,
+		},
+	}
+	service := NewProductService(repo)
+
+	adminData, err := service.GetByID(context.Background(), shopID.String(), productID.String(), models.RoleAdmin)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if _, ok := adminData.(dto.ProductResponse); !ok {
+		t.Fatalf("expected dto.ProductResponse, got %T", adminData)
+	}
+
+	superData, err := service.GetByID(context.Background(), shopID.String(), productID.String(), models.RoleSuperAdmin)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	superResp, ok := superData.(dto.ProductAdminResponse)
+	if !ok {
+		t.Fatalf("expected dto.ProductAdminResponse, got %T", superData)
+	}
+	if !superResp.PurchasePrice.Equal(decimal.RequireFromString("300.00")) {
+		t.Fatalf("unexpected purchasePrice value: %s", superResp.PurchasePrice.String())
+	}
+}
+
+func TestProductService_Update_SaveNotFoundMappedToDomainError(t *testing.T) {
+	shopID := uuid.New()
+	productID := uuid.New()
+	repo := &fakeProductServiceRepo{
+		findProduct: &models.Product{
+			ID:            productID,
+			Name:          "Headphones",
+			Category:      "Audio",
+			PurchasePrice: decimal.RequireFromString("150.00"),
+			SellingPrice:  decimal.RequireFromString("250.00"),
+			Stock:         4,
+			ShopID:        shopID,
+		},
+		saveErr: gorm.ErrRecordNotFound,
+	}
+	service := NewProductService(repo)
+
+	req := dto.UpdateProductRequest{
+		Name:         "Headphones",
+		Category:     "Audio",
+		SellingPrice: decimal.RequireFromString("260.00"),
+		Stock:        3,
+	}
+
+	_, err := service.Update(context.Background(), shopID.String(), productID.String(), models.RoleAdmin, req)
+	if !errors.Is(err, ErrProductNotFound) {
+		t.Fatalf("expected ErrProductNotFound, got %v", err)
+	}
+}
+
+func TestProductService_Delete_InvalidShopID(t *testing.T) {
+	service := NewProductService(&fakeProductServiceRepo{})
+
+	err := service.Delete(context.Background(), "invalid-shop-id", uuid.New().String())
+	if !errors.Is(err, ErrInvalidShopID) {
+		t.Fatalf("expected ErrInvalidShopID, got %v", err)
+	}
+}
