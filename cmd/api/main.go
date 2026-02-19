@@ -94,7 +94,7 @@ func main() {
 		middleware.ShopIsolationMiddleware(),
 		middleware.RoleMiddleware(models.RoleSuperAdmin),
 	)
-	superAdminPrivate.GET("/reports/dashboard", reportHandler.Dashboard)
+	superAdminPrivate.GET("/reports/dashboard", reportHandler.GetDashboard)
 
 	public := router.Group("/public")
 	public.GET("/:shopID/products", publicHandler.ListPublicProducts)
