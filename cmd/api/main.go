@@ -38,7 +38,8 @@ func main() {
 	authService := services.NewAuthService(cfg, userRepo, shopRepo)
 	productService := services.NewProductService(productRepo)
 	publicService := services.NewPublicService(shopRepo, productRepo)
-	transactionService := services.NewTransactionService(db, productRepo, transactionRepo)
+	//transactionService := services.NewTransactionService(db, productRepo, transactionRepo)
+	transactionService := services.NewTransactionService(db, transactionRepo)
 	reportService := services.NewReportService(transactionRepo, productRepo, cfg.LowStockThreshold)
 
 	authHandler := handlers.NewAuthHandler(authService)

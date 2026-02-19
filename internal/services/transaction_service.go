@@ -1,3 +1,105 @@
+// -----NEW-----
+package services
+
+import (
+	"context"
+	"errors"
+
+	"arem-shop/internal/dto"
+	"arem-shop/internal/models"
+	"arem-shop/internal/repository"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+// TransactionService définit le contrat du service
+type TransactionService interface {
+	Create(ctx context.Context, shopID string, req dto.CreateTransactionRequest) (*dto.TransactionResponse, error)
+}
+
+type transactionService struct {
+	db              *gorm.DB
+	transactionRepo repository.TransactionRepository
+}
+
+// NewTransactionService instancie le service
+func NewTransactionService(db *gorm.DB, transactionRepo repository.TransactionRepository) TransactionService {
+	return &transactionService{
+		db:              db,
+		transactionRepo: transactionRepo,
+	}
+}
+
+func (s *transactionService) Create(ctx context.Context, shopID string, req dto.CreateTransactionRequest) (*dto.TransactionResponse, error) {
+	// 1. Sécurité Multi-tenant : validation du ShopID
+	shopUUID, err := uuid.Parse(shopID)
+	if err != nil {
+		return nil, errors.New("invalid shop ID")
+	}
+
+	// 2. Routage selon le type de transaction
+	switch req.Type {
+	case "Sale":
+		if req.ProductID == nil {
+			return nil, errors.New("productID is required for a Sale")
+		}
+		if req.Quantity <= 0 {
+			return nil, errors.New("quantity must be greater than 0 for a Sale")
+		}
+
+		// Ouverture de la transaction SQL
+		tx := s.db.WithContext(ctx).Begin()
+		if tx.Error != nil {
+			return nil, tx.Error
+		}
+
+		// Appel de la méthode atomique du repo
+		err := s.transactionRepo.CreateSale(ctx, tx, shopUUID, *req.ProductID, req.Quantity, req.Amount)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+
+		// Si tout s'est bien passé, on valide la transaction
+		if err := tx.Commit().Error; err != nil {
+			return nil, err
+		}
+
+		return &dto.TransactionResponse{
+			Type:      req.Type,
+			ProductID: req.ProductID,
+			Quantity:  req.Quantity,
+			Amount:    req.Amount,
+			ShopID:    shopUUID,
+		}, nil
+
+	case "Expense", "Withdrawal":
+		transaction := &models.Transaction{
+			Type:   req.Type,
+			Amount: req.Amount,
+			ShopID: shopUUID,
+		}
+
+		err := s.transactionRepo.Create(ctx, nil, transaction)
+		if err != nil {
+			return nil, err
+		}
+
+		return &dto.TransactionResponse{
+			ID:     transaction.ID,
+			Type:   transaction.Type,
+			Amount: transaction.Amount,
+			ShopID: transaction.ShopID,
+		}, nil
+
+	default:
+		return nil, errors.New("invalid transaction type")
+	}
+}
+
+//-----OLD-----
+/*
 package services
 
 import (
@@ -161,3 +263,10 @@ func toTransactionResponse(transaction models.Transaction) dto.TransactionRespon
 		CreatedAt: transaction.CreatedAt,
 	}
 }
+*/
+
+//-----Commenaire Personne 3-----
+//L'objectif du Service est d'orchestrer, pas d'exécuter les requêtes DB complexes.
+// ICI
+//ouvrir la transaction SQL (db.Begin()), appeler notre fameux CreateSale, et valider (Commit) ou annuler (Rollback) en fonction du résultat.
+//
