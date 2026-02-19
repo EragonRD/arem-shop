@@ -179,7 +179,8 @@ export const apiClient: DataClient = {
   },
 
   async listPublicProducts(shopID: string): Promise<PublicProductViewModel[]> {
-    const payload = await request<unknown[]>(`/public/${shopID}/products`, { method: "GET" });
-    return payload.map((product) => toPublicProductViewModel(product as never));
+    const payload = await request<ProductEnvelope<unknown[]>>(`/public/${shopID}/products`, { method: "GET" });
+    const data = parseEnvelope(payload);
+    return data.map((product) => toPublicProductViewModel(product as never));
   },
 };

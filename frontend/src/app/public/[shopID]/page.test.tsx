@@ -15,6 +15,12 @@ vi.mock("@/lib/services/dataClient", () => {
   };
 });
 
+vi.mock("next/navigation", () => {
+  return {
+    useParams: () => ({ shopID: "11111111-1111-1111-1111-111111111111" }),
+  };
+});
+
 describe("PublicShopPage", () => {
   it("renders public catalog without auth", async () => {
     listPublicProductsMock.mockResolvedValueOnce([
@@ -32,7 +38,7 @@ describe("PublicShopPage", () => {
 
     render(
       <I18nProvider>
-        <PublicShopPage params={{ shopID: "11111111-1111-1111-1111-111111111111" }} />
+        <PublicShopPage />
       </I18nProvider>,
     );
 

@@ -49,6 +49,18 @@ func TestPublicServiceListProductsByShopID_InvalidShopID(t *testing.T) {
 	}
 }
 
+func TestPublicServiceListProductsByShopID_ShopNotFound(t *testing.T) {
+	service := NewPublicService(
+		&mockPublicShopRepository{shop: nil},
+		&mockPublicProductRepository{},
+	)
+
+	_, err := service.ListProductsByShopID(context.Background(), uuid.New().String())
+	if !errors.Is(err, ErrShopNotFound) {
+		t.Fatalf("expected ErrShopNotFound, got %v", err)
+	}
+}
+
 func TestPublicServiceListProductsByShopID_InactiveShop(t *testing.T) {
 	shopID := uuid.New()
 	service := NewPublicService(

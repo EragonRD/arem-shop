@@ -1,23 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useI18n } from "@/lib/i18n/useI18n";
 import { dataClient } from "@/lib/services/dataClient";
 import type { PublicProductViewModel } from "@/lib/types";
 
-interface PublicShopPageProps {
-  params: {
-    shopID: string;
-  };
-}
-
 function formatPrice(value: number): string {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(value);
 }
 
-export default function PublicShopPage({ params }: PublicShopPageProps) {
+export default function PublicShopPage() {
+  const { shopID } = useParams<{ shopID: string }>();
   const { t } = useI18n();
   const [products, setProducts] = useState<PublicProductViewModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +23,7 @@ export default function PublicShopPage({ params }: PublicShopPageProps) {
     const load = async () => {
       try {
         setLoading(true);
-        const list = await dataClient.listPublicProducts(params.shopID);
+        const list = await dataClient.listPublicProducts(shopID);
         setProducts(list);
       } catch (catalogError) {
         setError(catalogError instanceof Error ? catalogError.message : "failed to load public catalog");
@@ -37,13 +33,13 @@ export default function PublicShopPage({ params }: PublicShopPageProps) {
     };
 
     void load();
-  }, [params.shopID]);
+  }, [shopID]);
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl space-y-6 px-4 py-8">
       <header className="space-y-2">
         <p className="font-display text-3xl font-semibold text-brand-fg">{t("publicTitle")}</p>
-        <p className="text-sm text-brand-fg/70">Shop: {params.shopID}</p>
+        <p className="text-sm text-brand-fg/70">Shop: {shopID}</p>
         <div className="text-sm text-brand-primary underline underline-offset-2">
           <Link href="/login">Back office</Link>
         </div>
