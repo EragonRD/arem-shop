@@ -15,6 +15,7 @@ import (
 
 type productHandlerService interface {
 	List(ctx context.Context, shopID string, role models.UserRole) (interface{}, error)
+	GetByID(ctx context.Context, shopID, productID string, role models.UserRole) (interface{}, error)
 	Create(ctx context.Context, shopID string, role models.UserRole, req dto.CreateProductRequest) (interface{}, error)
 	Update(ctx context.Context, shopID, productID string, role models.UserRole, req dto.UpdateProductRequest) (interface{}, error)
 	Delete(ctx context.Context, shopID, productID string) error
@@ -46,6 +47,30 @@ func (h *ProductHandler) List(c *gin.Context) {
 	}
 
 	respondProductSuccess(c, http.StatusOK, products)
+}
+
+func (h *ProductHandler) GetByID(c *gin.Context) {
+	shopID, role, ok := getTenantAuthContext(c)
+	if !ok {
+		return
+	}
+
+	product, err := h.productService.GetByID(c.Request.Context(), shopID, c.Param("id"), role)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrInvalidShopID):
+			respondProductError(c, http.StatusUnauthorized, err.Error())
+		case errors.Is(err, services.ErrInvalidProductID):
+			respondProductError(c, http.StatusBadRequest, err.Error())
+		case errors.Is(err, services.ErrProductNotFound):
+			respondProductError(c, http.StatusNotFound, err.Error())
+		default:
+			respondProductError(c, http.StatusInternalServerError, "failed to get product")
+		}
+		return
+	}
+
+	respondProductSuccess(c, http.StatusOK, product)
 }
 
 func (h *ProductHandler) Create(c *gin.Context) {
