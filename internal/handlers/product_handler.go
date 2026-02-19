@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -8,16 +9,22 @@ import (
 	"arem-shop/internal/middleware"
 	"arem-shop/internal/models"
 	"arem-shop/internal/services"
-	"arem-shop/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-type ProductHandler struct {
-	productService *services.ProductService
+type productHandlerService interface {
+	List(ctx context.Context, shopID string, role models.UserRole) (interface{}, error)
+	Create(ctx context.Context, shopID string, role models.UserRole, req dto.CreateProductRequest) (interface{}, error)
+	Update(ctx context.Context, shopID, productID string, role models.UserRole, req dto.UpdateProductRequest) (interface{}, error)
+	Delete(ctx context.Context, shopID, productID string) error
 }
 
-func NewProductHandler(productService *services.ProductService) *ProductHandler {
+type ProductHandler struct {
+	productService productHandlerService
+}
+
+func NewProductHandler(productService productHandlerService) *ProductHandler {
 	return &ProductHandler{productService: productService}
 }
 
@@ -31,14 +38,14 @@ func (h *ProductHandler) List(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrInvalidShopID):
-			utils.JSONErrorWithCode(c, http.StatusUnauthorized, "INVALID_SHOP_ID", err.Error())
+			respondProductError(c, http.StatusUnauthorized, err.Error())
 		default:
-			utils.JSONErrorWithCode(c, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to list products")
+			respondProductError(c, http.StatusInternalServerError, "failed to list products")
 		}
 		return
 	}
 
-	c.JSON(http.StatusOK, products)
+	respondProductSuccess(c, http.StatusOK, products)
 }
 
 func (h *ProductHandler) Create(c *gin.Context) {
@@ -49,7 +56,7 @@ func (h *ProductHandler) Create(c *gin.Context) {
 
 	var req dto.CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.JSONValidationError(c, err)
+		respondProductError(c, http.StatusBadRequest, "invalid request payload")
 		return
 	}
 
@@ -57,26 +64,28 @@ func (h *ProductHandler) Create(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrInvalidShopID):
-			utils.JSONErrorWithCode(c, http.StatusUnauthorized, "INVALID_SHOP_ID", err.Error())
+			respondProductError(c, http.StatusUnauthorized, err.Error())
 		case errors.Is(err, services.ErrInvalidProductName):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "INVALID_NAME", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, services.ErrInvalidProductCategory):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "INVALID_CATEGORY", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, services.ErrPurchasePriceRequired):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "PURCHASE_PRICE_REQUIRED", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, services.ErrPurchasePriceNegative):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "PURCHASE_PRICE_NEGATIVE", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
+		case errors.Is(err, services.ErrPurchasePriceForbidden):
+			respondProductError(c, http.StatusForbidden, err.Error())
 		case errors.Is(err, services.ErrSellingPriceNegative):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "SELLING_PRICE_NEGATIVE", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, services.ErrStockNegative):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "STOCK_NEGATIVE", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
 		default:
-			utils.JSONErrorWithCode(c, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create product")
+			respondProductError(c, http.StatusInternalServerError, "failed to create product")
 		}
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	respondProductSuccess(c, http.StatusCreated, created)
 }
 
 func (h *ProductHandler) Update(c *gin.Context) {
@@ -87,7 +96,7 @@ func (h *ProductHandler) Update(c *gin.Context) {
 
 	var req dto.UpdateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.JSONValidationError(c, err)
+		respondProductError(c, http.StatusBadRequest, "invalid request payload")
 		return
 	}
 
@@ -95,28 +104,30 @@ func (h *ProductHandler) Update(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrInvalidShopID):
-			utils.JSONErrorWithCode(c, http.StatusUnauthorized, "INVALID_SHOP_ID", err.Error())
+			respondProductError(c, http.StatusUnauthorized, err.Error())
 		case errors.Is(err, services.ErrInvalidProductID):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "INVALID_PRODUCT_ID", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, services.ErrProductNotFound):
-			utils.JSONErrorWithCode(c, http.StatusNotFound, "PRODUCT_NOT_FOUND", err.Error())
+			respondProductError(c, http.StatusNotFound, err.Error())
 		case errors.Is(err, services.ErrInvalidProductName):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "INVALID_NAME", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, services.ErrInvalidProductCategory):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "INVALID_CATEGORY", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, services.ErrPurchasePriceNegative):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "PURCHASE_PRICE_NEGATIVE", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
+		case errors.Is(err, services.ErrPurchasePriceForbidden):
+			respondProductError(c, http.StatusForbidden, err.Error())
 		case errors.Is(err, services.ErrSellingPriceNegative):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "SELLING_PRICE_NEGATIVE", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, services.ErrStockNegative):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "STOCK_NEGATIVE", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
 		default:
-			utils.JSONErrorWithCode(c, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to update product")
+			respondProductError(c, http.StatusInternalServerError, "failed to update product")
 		}
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	respondProductSuccess(c, http.StatusOK, updated)
 }
 
 func (h *ProductHandler) Delete(c *gin.Context) {
@@ -129,32 +140,58 @@ func (h *ProductHandler) Delete(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrInvalidShopID):
-			utils.JSONErrorWithCode(c, http.StatusUnauthorized, "INVALID_SHOP_ID", err.Error())
+			respondProductError(c, http.StatusUnauthorized, err.Error())
 		case errors.Is(err, services.ErrInvalidProductID):
-			utils.JSONErrorWithCode(c, http.StatusBadRequest, "INVALID_PRODUCT_ID", err.Error())
+			respondProductError(c, http.StatusBadRequest, err.Error())
 		case errors.Is(err, services.ErrProductNotFound):
-			utils.JSONErrorWithCode(c, http.StatusNotFound, "PRODUCT_NOT_FOUND", err.Error())
+			respondProductError(c, http.StatusNotFound, err.Error())
 		default:
-			utils.JSONErrorWithCode(c, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to delete product")
+			respondProductError(c, http.StatusInternalServerError, "failed to delete product")
 		}
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	respondProductSuccess(c, http.StatusOK, gin.H{
+		"message": "product deleted",
+	})
 }
 
 func getTenantAuthContext(c *gin.Context) (string, models.UserRole, bool) {
 	shopID, ok := middleware.GetShopID(c)
 	if !ok {
-		utils.JSONErrorWithCode(c, http.StatusUnauthorized, "MISSING_SHOP_CONTEXT", "shop context not found")
+		respondProductError(c, http.StatusUnauthorized, "shop context not found")
 		return "", "", false
 	}
 
 	claims, ok := middleware.GetClaims(c)
 	if !ok {
-		utils.JSONErrorWithCode(c, http.StatusUnauthorized, "MISSING_CLAIMS", "authentication claims not found")
+		respondProductError(c, http.StatusUnauthorized, "authentication claims not found")
 		return "", "", false
 	}
 
 	return shopID, models.UserRole(claims.Role), true
+}
+
+type productSuccessEnvelope struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data"`
+}
+
+type productErrorEnvelope struct {
+	Success bool   `json:"success"`
+	Error   string `json:"error"`
+}
+
+func respondProductSuccess(c *gin.Context, status int, data interface{}) {
+	c.JSON(status, productSuccessEnvelope{
+		Success: true,
+		Data:    data,
+	})
+}
+
+func respondProductError(c *gin.Context, status int, message string) {
+	c.JSON(status, productErrorEnvelope{
+		Success: false,
+		Error:   message,
+	})
 }

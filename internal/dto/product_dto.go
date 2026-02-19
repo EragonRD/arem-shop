@@ -28,16 +28,21 @@ type UpdateProductRequest struct {
 	ImageURL      string           `json:"imageURL" binding:"max=2048"`
 }
 
-// ProductResponse representation API role-aware (purchasePrice masque pour Admin).
+// ProductResponse representation API pour Admin (purchasePrice masque).
 type ProductResponse struct {
-	ID            string           `json:"id"`
-	Name          string           `json:"name"`
-	Description   string           `json:"description"`
-	Category      string           `json:"category"`
-	PurchasePrice *decimal.Decimal `json:"purchasePrice,omitempty"`
-	SellingPrice  decimal.Decimal  `json:"sellingPrice"`
-	Stock         int              `json:"stock"`
-	ImageURL      string           `json:"imageURL"`
-	ShopID        string           `json:"shopID"`
-	CreatedAt     time.Time        `json:"createdAt"`
+	ID           string          `json:"id"`
+	Name         string          `json:"name"`
+	Description  string          `json:"description"`
+	Category     string          `json:"category"`
+	SellingPrice decimal.Decimal `json:"sellingPrice"`
+	Stock        int             `json:"stock"`
+	ImageURL     string          `json:"imageURL"`
+	ShopID       string          `json:"shopID"`
+	CreatedAt    time.Time       `json:"createdAt"`
+}
+
+// ProductAdminResponse representation API pour SuperAdmin (purchasePrice visible).
+type ProductAdminResponse struct {
+	ProductResponse
+	PurchasePrice decimal.Decimal `json:"purchasePrice"`
 }
