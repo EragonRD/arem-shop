@@ -7,6 +7,7 @@ import (
 )
 
 // CreateTransactionRequest payload de creation transaction.
+// NB: Pas de ShopID ici, il sera injecté via le JWT pour la sécurité multi-tenant.
 type CreateTransactionRequest struct {
 	Type      string          `json:"type" binding:"required,oneof=Sale Expense Withdrawal"`
 	ProductID *string         `json:"productID,omitempty"`
@@ -15,6 +16,7 @@ type CreateTransactionRequest struct {
 }
 
 // TransactionResponse representation API d'une transaction.
+// TransactionResponsense est l'objet renvoyé au client pour masquer les détails internes de la DB
 type TransactionResponse struct {
 	ID        string          `json:"id"`
 	Type      string          `json:"type"`

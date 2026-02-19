@@ -9,12 +9,14 @@ import (
 
 type TransactionType string
 
+// Constantes pour l'énumération des types de transaction
 const (
 	TransactionSale       TransactionType = "Sale"
 	TransactionExpense    TransactionType = "Expense"
 	TransactionWithdrawal TransactionType = "Withdrawal"
 )
 
+// Transaction représente l'entité transaction dans la base de données
 // Transaction trace tous les flux financiers d'un shop.
 type Transaction struct {
 	ID        uuid.UUID       `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
