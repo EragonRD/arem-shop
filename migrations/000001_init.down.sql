@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS transactions;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS shops;
+DROP TYPE IF EXISTS transaction_type;
+DROP TYPE IF EXISTS user_role;

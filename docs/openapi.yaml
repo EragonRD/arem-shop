@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info:
+  title: Arem Shop API
+  version: 0.1.0
+  description: Initial skeleton (module 1)
+paths:
+  /health:
+    get:
+      summary: API health check
+      responses:
+        '200':
+          description: OK
