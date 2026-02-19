@@ -2,6 +2,10 @@
 .env
 config/.env
 *.env
+!.env.example
+
+# Docker
+docker-compose.override.yml
 
 # Go binaries
 *.exe
