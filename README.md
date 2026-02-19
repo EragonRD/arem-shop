@@ -703,7 +703,7 @@ docker compose up --build
 - Backend reads `CORS_ALLOWED_ORIGINS` (default: `http://localhost:3000`).
 - Frontend reads:
   - `NEXT_PUBLIC_API_BASE_URL`
-  - `NEXT_PUBLIC_DATA_MODE=mock|api`
+  - `NEXT_PUBLIC_DATA_MODE=mock|api` (default recommended: `api`)
 
 ### 18.5 Auth and token flow
 
