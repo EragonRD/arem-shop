@@ -1,330 +1,273 @@
-# Architecture Mermaid (HD)
+# Arem-Shop — Architecture du Projet
 
-Ce document donne une vue complete du fonctionnement de l'API multi-tenant.
+**API REST multi-tenant** de gestion de boutique (produits, transactions, reporting), écrite en **Go** avec le framework **Gin**.
 
-## 1) Vue globale de l'architecture
+---
 
-```mermaid
-flowchart LR
-    %% Clients
-    subgraph C[Clients]
-        SA[SuperAdmin Client]
-        AD[Admin Client]
-        GU[Guest Client]
-    end
+## Arborescence
 
-    %% API
-    subgraph A[Go API - Gin]
-        R[Router]
-
-        subgraph RG[Route Groups]
-            H[/GET /health/]
-            L[/POST /auth/login/]
-            R1[/POST /auth/register/]
-            P1[/GET /products/]
-            P2[/POST /products/]
-            P3[/PUT /products/:id/]
-            P4[/DELETE /products/:id/]
-            T1[/POST /transactions/]
-            D1[/GET /reports/dashboard/]
-            U1[/GET /public/:shopID/products/]
-        end
-
-        subgraph MW[Middlewares]
-            M1[AuthMiddleware]
-            M2[ShopIsolationMiddleware]
-            M3[RoleMiddleware]
-        end
-
-        subgraph HN[Handlers]
-            AH[AuthHandler]
-            PH[ProductHandler]
-            TH[TransactionHandler]
-            RH[ReportHandler]
-            UH[PublicHandler]
-        end
-
-        subgraph SV[Services]
-            AS[AuthService]
-            PS[ProductService]
-            TS[TransactionService]
-            RS[ReportService]
-            US[PublicService]
-        end
-
-        subgraph RP[Repositories]
-            UR[UserRepository]
-            SR[ShopRepository]
-            PR[ProductRepository]
-            TR[TransactionRepository]
-        end
-
-        subgraph UT[Utils]
-            JWT[JWT Utils]
-            BCR[Bcrypt Utils]
-            WA[WhatsApp Utils]
-            RESP[Response Utils]
-        end
-    end
-
-    %% DB
-    subgraph DB[PostgreSQL]
-        S[(shops)]
-        U[(users)]
-        P[(products)]
-        T[(transactions)]
-    end
-
-    SA --> R
-    AD --> R
-    GU --> R
-
-    R --> H
-    R --> L
-    R --> R1
-    R --> P1
-    R --> P2
-    R --> P3
-    R --> P4
-    R --> T1
-    R --> D1
-    R --> U1
-
-    %% Private route chain
-    R1 --> M1 --> M2 --> M3 --> AH
-    P1 --> M1 --> M2 --> M3 --> PH
-    P2 --> M1 --> M2 --> M3 --> PH
-    P3 --> M1 --> M2 --> M3 --> PH
-    P4 --> M1 --> M2 --> M3 --> PH
-    T1 --> M1 --> M2 --> M3 --> TH
-    D1 --> M1 --> M2 --> M3 --> RH
-
-    %% Public routes
-    H --> RESP
-    L --> AH
-    U1 --> UH
-
-    AH --> AS
-    PH --> PS
-    TH --> TS
-    RH --> RS
-    UH --> US
-
-    AS --> UR
-    AS --> SR
-    AS --> JWT
-    AS --> BCR
-
-    PS --> PR
-    TS --> PR
-    TS --> TR
-    RS --> PR
-    RS --> TR
-    US --> SR
-    US --> PR
-    US --> WA
-
-    UR --> U
-    SR --> S
-    PR --> P
-    TR --> T
-
-    P --> S
-    U --> S
-    T --> S
-    T --> P
+```
+arem-shop/
+├── cmd/
+│   └── api/
+│       └── main.go              ← Point d'entrée, DI & routing
+├── config/
+│   └── .env                     ← Variables d'environnement (gitignored)
+├── internal/
+│   ├── config/
+│   │   └── config.go            ← Chargement de la configuration (.env → struct)
+│   ├── database/
+│   │   └── postgres.go          ← Connexion PostgreSQL via GORM
+│   ├── models/
+│   │   ├── shop.go              ← Entité Shop (tenant)
+│   │   ├── user.go              ← Entité User + rôles
+│   │   ├── product.go           ← Entité Product
+│   │   └── transaction.go       ← Entité Transaction (Sale/Expense/Withdrawal)
+│   ├── dto/
+│   │   ├── auth_dto.go          ← DTOs d'authentification
+│   │   ├── product_dto.go       ← DTOs produit (create/update/response)
+│   │   ├── public_product_dto.go← DTOs vitrine publique
+│   │   ├── report_dto.go        ← DTOs dashboard
+│   │   └── transaction_dto.go   ← DTOs transaction
+│   ├── repository/
+│   │   ├── user_repository.go
+│   │   ├── shop_repository.go
+│   │   ├── product_repository.go
+│   │   └── transaction_repository.go
+│   ├── services/
+│   │   ├── auth_service.go      ← Inscription & login
+│   │   ├── product_service.go   ← CRUD produits
+│   │   ├── public_service.go    ← Catalogue public
+│   │   ├── transaction_service.go ← Ventes, dépenses, retraits
+│   │   └── report_service.go    ← Dashboard financier
+│   ├── handlers/
+│   │   ├── auth_handler.go
+│   │   ├── product_handler.go
+│   │   ├── public_handler.go
+│   │   ├── transaction_handler.go
+│   │   └── report_handler.go
+│   ├── middleware/
+│   │   ├── auth_middleware.go           ← Validation JWT
+│   │   ├── role_middleware.go           ← Contrôle RBAC
+│   │   └── shop_isolation_middleware.go ← Isolation multi-tenant
+│   └── utils/
+│       ├── jwt.go               ← Génération & parsing JWT
+│       ├── password.go          ← Hashing bcrypt
+│       ├── response.go          ← Helpers réponse JSON
+│       └── whatsapp.go          ← Utilitaire WhatsApp
+├── migrations/
+│   ├── 000001_init.up.sql       ← Migration initiale
+│   └── 000001_init.down.sql     ← Rollback
+├── scripts/
+│   └── first_run.sh             ← Script de premier lancement
+├── docs/
+│   └── openapi.yaml             ← Spécification OpenAPI
+├── go.mod
+├── go.sum
+├── Makefile
+└── .gitignore
 ```
 
-## 2) Pipeline de securite des routes privees
+---
+
+## Architecture en Couches
 
 ```mermaid
-flowchart TB
-    REQ[Incoming private request]
-    AUTH[AuthMiddleware\n- Read Authorization\n- Validate JWT signature/exp\n- Inject claims]
-    ISO[ShopIsolationMiddleware\n- Read claims.shopID\n- Validate UUID\n- Reject cross-shop path/query\n- Inject shop_id context]
-    ROLE[RoleMiddleware\n- Compare claims.role with allowed roles]
-    HANDLER[Handler]
-    SERVICE[Service]
-    REPO[Repository]
-    DB[(PostgreSQL)]
-    RESP[HTTP response]
-
-    REQ --> AUTH
-    AUTH -->|401| RESP
-    AUTH --> ISO
-    ISO -->|401/403| RESP
-    ISO --> ROLE
-    ROLE -->|403| RESP
-    ROLE --> HANDLER --> SERVICE --> REPO --> DB --> RESP
-```
-
-## 3) Sequence detaillee: POST /transactions (type=Sale)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant C as Client (Admin/SuperAdmin)
-    participant G as Gin Router
-    participant AM as AuthMiddleware
-    participant SIM as ShopIsolationMiddleware
-    participant RM as RoleMiddleware
-    participant TH as TransactionHandler
-    participant TS as TransactionService
-    participant PR as ProductRepository
-    participant TR as TransactionRepository
-    participant PG as PostgreSQL
-
-    C->>G: POST /transactions + Bearer JWT
-    G->>AM: Validate JWT
-    AM-->>G: claims{userID, role, shopID}
-    G->>SIM: Validate tenant isolation
-    SIM-->>G: shop_id in context
-    G->>RM: Check role in [Admin, SuperAdmin]
-    RM-->>G: OK
-    G->>TH: Create()
-    TH->>TS: Create(shopID_from_context, payload)
-
-    TS->>PG: BEGIN
-    TS->>PR: FindByIDAndShopIDForUpdate(productID, shopID)
-    PR->>PG: SELECT ... FOR UPDATE
-    PG-->>PR: product row
-    PR-->>TS: product(stock)
-
-    alt stock < quantity
-        TS->>PG: ROLLBACK
-        TS-->>TH: ErrInsufficientStock
-        TH-->>C: 400 INSUFFICIENT_STOCK
-    else stock >= quantity
-        TS->>PR: SaveWithTx(product.stock - quantity)
-        PR->>PG: UPDATE products SET stock = stock - qty
-        TS->>TR: Create(transaction)
-        TR->>PG: INSERT INTO transactions
-        TS->>PG: COMMIT
-        TS-->>TH: TransactionResponse
-        TH-->>C: 201 Created
+graph TB
+    Client["🌐 Client HTTP"]
+    
+    subgraph "Gin Router"
+        MW_Auth["🔒 AuthMiddleware<br/>JWT validation"]
+        MW_Shop["🏪 ShopIsolationMiddleware<br/>Multi-tenant guard"]
+        MW_Role["👤 RoleMiddleware<br/>RBAC check"]
     end
-```
-
-## 4) Sequence detaillee: GET /public/:shopID/products
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant G as Guest Client
-    participant R as Gin Router
-    participant UH as PublicHandler
-    participant US as PublicService
-    participant SR as ShopRepository
-    participant PR as ProductRepository
-    participant WA as WhatsApp Utils
-    participant PG as PostgreSQL
-
-    G->>R: GET /public/:shopID/products
-    R->>UH: ListPublicProducts()
-    UH->>US: ListProductsByShopID(shopID_from_path)
-    US->>SR: FindByID(shopID)
-    SR->>PG: SELECT * FROM shops WHERE id = ?
-    PG-->>SR: shop row
-    SR-->>US: shop(active, whatsapp_number)
-
-    alt shop inactive/not found
-        US-->>UH: ErrShopInactive/ErrShopNotFound
-        UH-->>G: 403/404
-    else shop active
-        US->>PR: ListByShopID(shopID)
-        PR->>PG: SELECT * FROM products WHERE shop_id = ?
-        PG-->>PR: product rows
-        PR-->>US: products
-        loop each product
-            US->>WA: GenerateWhatsAppLink(shop.whatsapp, product.name)
-            WA-->>US: whatsappLink
-        end
-        US-->>UH: []PublicProductResponse (no purchasePrice)
-        UH-->>G: 200 OK
+    
+    subgraph "Handlers"
+        H_Auth["AuthHandler"]
+        H_Product["ProductHandler"]
+        H_Transaction["TransactionHandler"]
+        H_Report["ReportHandler"]
+        H_Public["PublicHandler"]
     end
+    
+    subgraph "Services — Logique métier"
+        S_Auth["AuthService"]
+        S_Product["ProductService"]
+        S_Transaction["TransactionService"]
+        S_Report["ReportService"]
+        S_Public["PublicService"]
+    end
+    
+    subgraph "Repositories — Accès données"
+        R_User["UserRepository"]
+        R_Shop["ShopRepository"]
+        R_Product["ProductRepository"]
+        R_Transaction["TransactionRepository"]
+    end
+    
+    DB[("🐘 PostgreSQL")]
+    
+    Client --> MW_Auth --> MW_Shop --> MW_Role --> H_Auth & H_Product & H_Transaction & H_Report
+    Client -.->|"sans auth"| H_Public
+    H_Auth --> S_Auth
+    H_Product --> S_Product
+    H_Transaction --> S_Transaction
+    H_Report --> S_Report
+    H_Public --> S_Public
+    S_Auth --> R_User & R_Shop
+    S_Product --> R_Product
+    S_Transaction --> R_Product & R_Transaction
+    S_Report --> R_Transaction & R_Product
+    S_Public --> R_Shop & R_Product
+    R_User & R_Shop & R_Product & R_Transaction --> DB
 ```
 
-## 5) Modele de donnees (ERD)
+---
+
+## Stack Technique
+
+| Composant       | Technologie                        |
+|-----------------|------------------------------------|
+| Langage         | **Go 1.18**                        |
+| Framework HTTP  | **Gin v1.8**                       |
+| ORM             | **GORM v1.23** + driver PostgreSQL |
+| Base de données | **PostgreSQL**                     |
+| Auth            | **JWT** (golang-jwt/jwt/v4)        |
+| Hashing         | **bcrypt** (golang.org/x/crypto)   |
+| Décimaux        | **shopspring/decimal**             |
+| UUID            | **google/uuid**                    |
+| Config          | **godotenv**                       |
+
+---
+
+## Modèle de Données (ERD)
 
 ```mermaid
 erDiagram
-    SHOPS ||--o{ USERS : owns
-    SHOPS ||--o{ PRODUCTS : owns
-    SHOPS ||--o{ TRANSACTIONS : owns
-    PRODUCTS ||--o{ TRANSACTIONS : referenced_by
-
-    SHOPS {
+    SHOP {
         uuid id PK
         string name
         bool active
-        string whatsapp_number
-        timestamptz created_at
+        string whatsAppNumber
+        timestamp createdAt
     }
-
-    USERS {
+    
+    USER {
         uuid id PK
         string name
         string email
-        string password_hash
-        enum role "SuperAdmin|Admin"
-        uuid shop_id FK
-        timestamptz created_at
+        string password
+        enum role "SuperAdmin | Admin"
+        uuid shopID FK
+        timestamp createdAt
     }
-
-    PRODUCTS {
+    
+    PRODUCT {
         uuid id PK
         string name
-        text description
+        string description
         string category
-        decimal purchase_price
-        decimal selling_price
+        decimal purchasePrice
+        decimal sellingPrice
         int stock
-        string image_url
-        uuid shop_id FK
-        timestamptz created_at
+        string imageURL
+        uuid shopID FK
+        timestamp createdAt
     }
-
-    TRANSACTIONS {
+    
+    TRANSACTION {
         uuid id PK
-        enum type "Sale|Expense|Withdrawal"
-        uuid product_id FK "nullable"
+        enum type "Sale | Expense | Withdrawal"
+        uuid productID FK "nullable"
         int quantity
         decimal amount
-        uuid shop_id FK
-        timestamptz created_at
+        uuid shopID FK
+        timestamp createdAt
     }
+    
+    SHOP ||--o{ USER : "emploie"
+    SHOP ||--o{ PRODUCT : "possède"
+    SHOP ||--o{ TRANSACTION : "enregistre"
+    PRODUCT ||--o{ TRANSACTION : "concerne"
 ```
 
-## 6) Matrice d'acces
+---
+
+## Endpoints API
+
+### Publics (sans authentification)
+| Méthode | Route                        | Description            |
+|---------|------------------------------|------------------------|
+| `GET`   | `/health`                    | Health check           |
+| `POST`  | `/auth/login`                | Connexion (retourne JWT) |
+| `GET`   | `/public/:shopID/products`   | Catalogue public       |
+
+### Protégés — SuperAdmin + Admin
+| Méthode  | Route              | Description            |
+|----------|--------------------|------------------------|
+| `GET`    | `/products`        | Lister les produits    |
+| `POST`   | `/products`        | Créer un produit       |
+| `PUT`    | `/products/:id`    | Modifier un produit    |
+| `DELETE` | `/products/:id`    | Supprimer un produit   |
+| `POST`   | `/transactions`    | Créer une transaction  |
+
+### Protégés — SuperAdmin uniquement
+| Méthode | Route                 | Description                |
+|---------|-----------------------|----------------------------|
+| `POST`  | `/auth/register`      | Enregistrer un utilisateur |
+| `GET`   | `/reports/dashboard`  | Dashboard financier        |
+
+---
+
+## Sécurité & Multi-Tenancy
 
 ```mermaid
-flowchart LR
-    SA[SuperAdmin]
-    AD[Admin]
-    GU[Guest]
-
-    EP1[/auth/register/]
-    EP2[/auth/login/]
-    EP3[/products CRUD/]
-    EP4[/transactions POST/]
-    EP5[/reports/dashboard/]
-    EP6[/public/:shopID/products/]
-
-    SA --> EP1
-    SA --> EP2
-    SA --> EP3
-    SA --> EP4
-    SA --> EP5
-
-    AD --> EP2
-    AD --> EP3
-    AD --> EP4
-
-    GU --> EP6
+sequenceDiagram
+    participant C as Client
+    participant Auth as AuthMiddleware
+    participant Shop as ShopIsolationMiddleware
+    participant Role as RoleMiddleware
+    participant H as Handler
+    
+    C->>Auth: Request + Bearer JWT
+    Auth->>Auth: Valider & décoder JWT
+    Auth->>Shop: Claims injectés dans le contexte
+    Shop->>Shop: Vérifier shopID du JWT<br/>vs shopID de la route
+    Shop->>Role: shopID validé dans le contexte
+    Role->>Role: Vérifier le rôle de l'utilisateur<br/>vs rôles autorisés
+    Role->>H: ✅ Accès autorisé
+    
+    Note over Auth: ❌ 401 si token absent/invalide
+    Note over Shop: ❌ 403 si cross-shop détecté
+    Note over Role: ❌ 403 si rôle insuffisant
 ```
 
-## Notes importantes
+### Principes clés
+- **JWT** : Chaque token contient `userID`, `shopID`, `role`
+- **Isolation multi-tenant** : Un utilisateur ne peut accéder qu'aux données de son shop
+- **RBAC** : Deux rôles — `SuperAdmin` (gestion complète) et `Admin` (opérations courantes)
+- **Protection des données sensibles** : Le `purchasePrice` n'est visible que par les `SuperAdmin`
 
-- L'isolation multi-tenant est enforcee au niveau middleware + repository (filtre `shop_id`).
-- Les routes publiques sont isolees par `:shopID` et ne renvoient jamais `purchasePrice`.
-- Les ventes decremente le stock de facon atomique dans une transaction SQL.
+---
+
+## Injection de Dépendances
+
+Le point d'entrée `main.go` assemble manuellement les couches (**pas de framework DI**) :
+
+```
+Config → Database → Repositories → Services → Handlers → Router
+```
+
+Cela garantit un **couplage faible** et une **testabilité maximale** — les services utilisent des **interfaces** pour leurs dépendances repository.
+
+---
+
+## Transactions Base de Données
+
+Les ventes (`TransactionSale`) utilisent une **transaction SQL** avec un verrou pessimiste (`SELECT ... FOR UPDATE`) pour :
+1. Verrouiller le produit concerné
+2. Vérifier le stock disponible
+3. Décrémenter le stock
+4. Créer la transaction
+
+Cela empêche les **race conditions** sur le stock.
