@@ -68,7 +68,27 @@ docs
 
 ## 6) Setup local
 
-### 6.0 Script one-shot (recommande pour premier lancement)
+### 6.0 Docker (recommandé — zéro installation)
+
+```bash
+cp .env.example .env        # Créer la configuration locale
+docker-compose up --build    # Build + lancement (API + PostgreSQL)
+```
+
+L'API est prête sur `http://localhost:8080` — la migration SQL s'applique automatiquement au premier lancement.
+
+```bash
+curl http://localhost:8080/health   # Vérifier que tout fonctionne
+```
+
+Pour arrêter :
+
+```bash
+docker-compose down       # Arrêter les conteneurs
+docker-compose down -v    # Arrêter + supprimer la base de données
+```
+
+### 6.1 Script one-shot (setup local sans Docker)
 
 Le script `scripts/first_run.sh` automatise:
 

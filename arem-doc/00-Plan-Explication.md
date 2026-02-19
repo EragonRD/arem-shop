@@ -20,6 +20,10 @@ Objectif: expliquer l'API multi-tenant Arem Shop de facon progressive, pour qu'u
    Endpoints, roles, payloads, erreurs standards.
 6. **Runbook technique** ([[06-Runbook-Technique]])  
    Setup, exploitation, points de surveillance.
+7. **Docker & Déploiement** ([[07-Docker-Deployment]])  
+   Dockerfile multi-stage, docker-compose, cycle de démarrage.
+8. **Guide de tests Docker** ([[08-Guide-Tests-Docker]])  
+   Script de test automatisé, flux de test, résultats attendus.
 
 ## Resultat attendu
 
