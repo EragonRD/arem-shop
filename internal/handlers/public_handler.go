@@ -1,20 +1,26 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
+	"arem-shop/internal/dto"
 	"arem-shop/internal/services"
 	"arem-shop/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-type PublicHandler struct {
-	publicService *services.PublicService
+type publicService interface {
+	ListProductsByShopID(ctx context.Context, shopID string) ([]dto.PublicProductResponse, error)
 }
 
-func NewPublicHandler(publicService *services.PublicService) *PublicHandler {
+type PublicHandler struct {
+	publicService publicService
+}
+
+func NewPublicHandler(publicService publicService) *PublicHandler {
 	return &PublicHandler{publicService: publicService}
 }
 
@@ -38,5 +44,5 @@ func (h *PublicHandler) ListPublicProducts(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, products)
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": products})
 }

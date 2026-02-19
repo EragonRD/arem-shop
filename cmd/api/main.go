@@ -13,6 +13,7 @@ import (
 	"arem-shop/internal/repository"
 	"arem-shop/internal/services"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,6 +30,14 @@ func main() {
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     cfg.CORSAllowedOrigins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	shopRepo := repository.NewShopRepository(db)
 	userRepo := repository.NewUserRepository(db)

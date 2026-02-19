@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -13,6 +14,8 @@ type AppConfig struct {
 	AppName string
 	AppEnv  string
 	AppPort string
+
+	CORSAllowedOrigins []string
 
 	DBHost     string
 	DBPort     string
@@ -38,6 +41,9 @@ func Load() (AppConfig, error) {
 		AppName: getenvDefault("APP_NAME", "arem-shop"),
 		AppEnv:  getenvDefault("APP_ENV", "development"),
 		AppPort: getenvDefault("APP_PORT", "8080"),
+		CORSAllowedOrigins: splitCSV(
+			getenvDefault("CORS_ALLOWED_ORIGINS", "http://localhost:3000"),
+		),
 
 		DBHost:     getenvDefault("DB_HOST", "localhost"),
 		DBPort:     getenvDefault("DB_PORT", "5432"),
@@ -92,4 +98,22 @@ func getenvIntDefault(key string, fallback int) (int, error) {
 		return 0, err
 	}
 	return parsed, nil
+}
+
+func splitCSV(raw string) []string {
+	parts := strings.Split(raw, ",")
+	entries := make([]string, 0, len(parts))
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			entries = append(entries, trimmed)
+		}
+	}
+
+	if len(entries) == 0 {
+		return []string{"http://localhost:3000"}
+	}
+
+	return entries
 }
