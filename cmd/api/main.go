@@ -81,6 +81,7 @@ func main() {
 		middleware.RoleMiddleware(models.RoleSuperAdmin, models.RoleAdmin),
 	)
 	private.GET("/products", productHandler.List)
+	private.GET("/products/:id", productHandler.GetByID)
 	private.POST("/products", productHandler.Create)
 	private.PUT("/products/:id", productHandler.Update)
 	private.DELETE("/products/:id", productHandler.Delete)

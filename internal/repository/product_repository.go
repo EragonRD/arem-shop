@@ -48,7 +48,26 @@ func (r *ProductRepository) Create(ctx context.Context, product *models.Product)
 }
 
 func (r *ProductRepository) Save(ctx context.Context, product *models.Product) error {
-	return r.db.WithContext(ctx).Save(product).Error
+	result := r.db.WithContext(ctx).
+		Model(&models.Product{}).
+		Where("id = ? AND shop_id = ?", product.ID, product.ShopID).
+		Updates(map[string]interface{}{
+			"name":           product.Name,
+			"description":    product.Description,
+			"category":       product.Category,
+			"purchase_price": product.PurchasePrice,
+			"selling_price":  product.SellingPrice,
+			"stock":          product.Stock,
+			"image_url":      product.ImageURL,
+		})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
 }
 
 func (r *ProductRepository) FindByIDAndShopIDForUpdate(ctx context.Context, tx *gorm.DB, productID, shopID uuid.UUID) (*models.Product, error) {
@@ -75,7 +94,26 @@ func (r *ProductRepository) SaveWithTx(ctx context.Context, tx *gorm.DB, product
 		execDB = r.db
 	}
 
-	return execDB.WithContext(ctx).Save(product).Error
+	result := execDB.WithContext(ctx).
+		Model(&models.Product{}).
+		Where("id = ? AND shop_id = ?", product.ID, product.ShopID).
+		Updates(map[string]interface{}{
+			"name":           product.Name,
+			"description":    product.Description,
+			"category":       product.Category,
+			"purchase_price": product.PurchasePrice,
+			"selling_price":  product.SellingPrice,
+			"stock":          product.Stock,
+			"image_url":      product.ImageURL,
+		})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
 }
 
 func (r *ProductRepository) CountLowStockByShopID(ctx context.Context, shopID uuid.UUID, threshold int) (int64, error) {

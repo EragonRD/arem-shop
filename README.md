@@ -318,10 +318,37 @@ curl -H "Authorization: Bearer <TOKEN>" \
   http://localhost:8080/products
 ```
 
+Exemple reponse:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "6ac4f1ba-28df-4d7e-b0d7-19348d1e95a6",
+      "name": "iPhone 14",
+      "description": "128GB",
+      "category": "Smartphones",
+      "sellingPrice": 5999.99,
+      "stock": 5,
+      "imageURL": "https://example.com/iphone14.jpg",
+      "shopID": "11111111-1111-1111-1111-111111111111",
+      "createdAt": "2026-02-19T10:00:00Z"
+    }
+  ]
+}
+```
+
+Regles role-based:
+
+- `SuperAdmin` voit `purchasePrice`
+- `Admin` ne voit jamais `purchasePrice`
+
 ### POST /products
 
-- Cas `SuperAdmin`: `purchasePrice` requis
-- Cas `Admin`: `purchasePrice` est ignore cote service et force a `0`
+- Cas `SuperAdmin`: `purchasePrice` requis et strictement `> 0`
+- Cas `Admin`: `purchasePrice` interdit dans le payload; si omis, la valeur interne est forcee a `0`
+- Validation commune: `sellingPrice > 0` et `stock >= 0`
 
 Exemple:
 
@@ -338,6 +365,15 @@ curl -X POST http://localhost:8080/products \
     "stock": 5,
     "imageURL": "https://example.com/iphone14.jpg"
   }'
+```
+
+Exemple erreur (`Admin` qui envoie `purchasePrice`):
+
+```json
+{
+  "success": false,
+  "error": "purchasePrice is not allowed for Admin"
+}
 ```
 
 ### PUT /products/:id
@@ -357,11 +393,28 @@ curl -X PUT http://localhost:8080/products/<PRODUCT_ID> \
   }'
 ```
 
+Regles:
+
+- `Admin` ne peut pas fournir `purchasePrice`
+- `SuperAdmin` peut mettre a jour `purchasePrice`, avec contrainte `> 0` si fourni
+- Toujours isole par `shopID` issu du JWT (jamais depuis le body)
+
 ### DELETE /products/:id
 
 ```bash
 curl -X DELETE http://localhost:8080/products/<PRODUCT_ID> \
   -H "Authorization: Bearer <TOKEN>"
+```
+
+Exemple reponse:
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "product deleted"
+  }
+}
 ```
 
 ### 12.4 Transactions

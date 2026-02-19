@@ -9,6 +9,7 @@ import (
 	"arem-shop/internal/models"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgconn"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -18,9 +19,11 @@ var (
 	ErrInvalidProductID       = errors.New("invalid product ID")
 	ErrProductNotFound        = errors.New("product not found")
 	ErrPurchasePriceRequired  = errors.New("purchasePrice is required for SuperAdmin")
-	ErrPurchasePriceNegative  = errors.New("purchasePrice cannot be negative")
-	ErrSellingPriceNegative   = errors.New("sellingPrice cannot be negative")
+	ErrPurchasePriceNegative  = errors.New("purchasePrice must be greater than 0")
+	ErrPurchasePriceForbidden = errors.New("purchasePrice is not allowed for Admin")
+	ErrSellingPriceNegative   = errors.New("sellingPrice must be greater than 0")
 	ErrStockNegative          = errors.New("stock cannot be negative")
+	ErrProductHasTransactions = errors.New("cannot delete product with existing transactions")
 	ErrInvalidProductName     = errors.New("name is required")
 	ErrInvalidProductCategory = errors.New("category is required")
 )
@@ -41,7 +44,7 @@ func NewProductService(productRepo productServiceProductRepository) *ProductServ
 	return &ProductService{productRepo: productRepo}
 }
 
-func (s *ProductService) List(ctx context.Context, shopID string, role models.UserRole) ([]dto.ProductResponse, error) {
+func (s *ProductService) List(ctx context.Context, shopID string, role models.UserRole) (interface{}, error) {
 	shopUUID, err := uuid.Parse(strings.TrimSpace(shopID))
 	if err != nil {
 		return nil, ErrInvalidShopID
@@ -52,16 +55,51 @@ func (s *ProductService) List(ctx context.Context, shopID string, role models.Us
 		return nil, err
 	}
 
-	includePurchasePrice := role == models.RoleSuperAdmin
+	if role == models.RoleSuperAdmin {
+		responses := make([]dto.ProductAdminResponse, 0, len(products))
+		for _, product := range products {
+			responses = append(responses, toProductAdminResponse(product))
+		}
+		return responses, nil
+	}
+
 	responses := make([]dto.ProductResponse, 0, len(products))
 	for _, product := range products {
-		responses = append(responses, toProductResponse(product, includePurchasePrice))
+		responses = append(responses, toProductResponse(product))
 	}
 
 	return responses, nil
 }
 
-func (s *ProductService) Create(ctx context.Context, shopID string, role models.UserRole, req dto.CreateProductRequest) (*dto.ProductResponse, error) {
+func (s *ProductService) GetByID(ctx context.Context, shopID, productID string, role models.UserRole) (interface{}, error) {
+	shopUUID, err := uuid.Parse(strings.TrimSpace(shopID))
+	if err != nil {
+		return nil, ErrInvalidShopID
+	}
+
+	productUUID, err := uuid.Parse(strings.TrimSpace(productID))
+	if err != nil {
+		return nil, ErrInvalidProductID
+	}
+
+	product, err := s.productRepo.FindByIDAndShopID(ctx, productUUID, shopUUID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrProductNotFound
+		}
+		return nil, err
+	}
+
+	if role == models.RoleSuperAdmin {
+		resp := toProductAdminResponse(*product)
+		return resp, nil
+	}
+
+	resp := toProductResponse(*product)
+	return resp, nil
+}
+
+func (s *ProductService) Create(ctx context.Context, shopID string, role models.UserRole, req dto.CreateProductRequest) (interface{}, error) {
 	shopUUID, err := uuid.Parse(strings.TrimSpace(shopID))
 	if err != nil {
 		return nil, ErrInvalidShopID
@@ -91,12 +129,16 @@ func (s *ProductService) Create(ctx context.Context, shopID string, role models.
 		return nil, err
 	}
 
-	includePurchasePrice := role == models.RoleSuperAdmin
-	resp := toProductResponse(product, includePurchasePrice)
-	return &resp, nil
+	if role == models.RoleSuperAdmin {
+		resp := toProductAdminResponse(product)
+		return resp, nil
+	}
+
+	resp := toProductResponse(product)
+	return resp, nil
 }
 
-func (s *ProductService) Update(ctx context.Context, shopID, productID string, role models.UserRole, req dto.UpdateProductRequest) (*dto.ProductResponse, error) {
+func (s *ProductService) Update(ctx context.Context, shopID, productID string, role models.UserRole, req dto.UpdateProductRequest) (interface{}, error) {
 	shopUUID, err := uuid.Parse(strings.TrimSpace(shopID))
 	if err != nil {
 		return nil, ErrInvalidShopID
@@ -126,17 +168,28 @@ func (s *ProductService) Update(ctx context.Context, shopID, productID string, r
 	existing.Stock = req.Stock
 	existing.ImageURL = strings.TrimSpace(req.ImageURL)
 
-	if role == models.RoleSuperAdmin && req.PurchasePrice != nil {
-		existing.PurchasePrice = req.PurchasePrice.Round(2)
+	if role == models.RoleSuperAdmin {
+		if req.PurchasePrice != nil {
+			existing.PurchasePrice = req.PurchasePrice.Round(2)
+		}
+	} else {
+		existing.PurchasePrice = decimal.Zero
 	}
 
 	if err := s.productRepo.Save(ctx, existing); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrProductNotFound
+		}
 		return nil, err
 	}
 
-	includePurchasePrice := role == models.RoleSuperAdmin
-	resp := toProductResponse(*existing, includePurchasePrice)
-	return &resp, nil
+	if role == models.RoleSuperAdmin {
+		resp := toProductAdminResponse(*existing)
+		return resp, nil
+	}
+
+	resp := toProductResponse(*existing)
+	return resp, nil
 }
 
 func (s *ProductService) Delete(ctx context.Context, shopID, productID string) error {
@@ -152,6 +205,9 @@ func (s *ProductService) Delete(ctx context.Context, shopID, productID string) e
 
 	deleted, err := s.productRepo.DeleteByIDAndShopID(ctx, productUUID, shopUUID)
 	if err != nil {
+		if isForeignKeyViolation(err) {
+			return ErrProductHasTransactions
+		}
 		return err
 	}
 	if !deleted {
@@ -161,6 +217,14 @@ func (s *ProductService) Delete(ctx context.Context, shopID, productID string) e
 	return nil
 }
 
+func isForeignKeyViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "23503"
+	}
+	return false
+}
+
 func validateProductCreateInput(role models.UserRole, req dto.CreateProductRequest) error {
 	if strings.TrimSpace(req.Name) == "" {
 		return ErrInvalidProductName
@@ -168,7 +232,7 @@ func validateProductCreateInput(role models.UserRole, req dto.CreateProductReque
 	if strings.TrimSpace(req.Category) == "" {
 		return ErrInvalidProductCategory
 	}
-	if req.SellingPrice.LessThan(decimal.Zero) {
+	if req.SellingPrice.LessThanOrEqual(decimal.Zero) {
 		return ErrSellingPriceNegative
 	}
 	if req.Stock < 0 {
@@ -178,9 +242,11 @@ func validateProductCreateInput(role models.UserRole, req dto.CreateProductReque
 		if req.PurchasePrice == nil {
 			return ErrPurchasePriceRequired
 		}
-		if req.PurchasePrice.LessThan(decimal.Zero) {
+		if req.PurchasePrice.LessThanOrEqual(decimal.Zero) {
 			return ErrPurchasePriceNegative
 		}
+	} else if req.PurchasePrice != nil {
+		return ErrPurchasePriceForbidden
 	}
 	return nil
 }
@@ -192,20 +258,24 @@ func validateProductUpdateInput(role models.UserRole, req dto.UpdateProductReque
 	if strings.TrimSpace(req.Category) == "" {
 		return ErrInvalidProductCategory
 	}
-	if req.SellingPrice.LessThan(decimal.Zero) {
+	if req.SellingPrice.LessThanOrEqual(decimal.Zero) {
 		return ErrSellingPriceNegative
 	}
 	if req.Stock < 0 {
 		return ErrStockNegative
 	}
-	if role == models.RoleSuperAdmin && req.PurchasePrice != nil && req.PurchasePrice.LessThan(decimal.Zero) {
-		return ErrPurchasePriceNegative
+	if role == models.RoleSuperAdmin {
+		if req.PurchasePrice != nil && req.PurchasePrice.LessThanOrEqual(decimal.Zero) {
+			return ErrPurchasePriceNegative
+		}
+	} else if req.PurchasePrice != nil {
+		return ErrPurchasePriceForbidden
 	}
 	return nil
 }
 
-func toProductResponse(product models.Product, includePurchasePrice bool) dto.ProductResponse {
-	resp := dto.ProductResponse{
+func toProductResponse(product models.Product) dto.ProductResponse {
+	return dto.ProductResponse{
 		ID:           product.ID.String(),
 		Name:         product.Name,
 		Description:  product.Description,
@@ -216,11 +286,11 @@ func toProductResponse(product models.Product, includePurchasePrice bool) dto.Pr
 		ShopID:       product.ShopID.String(),
 		CreatedAt:    product.CreatedAt,
 	}
+}
 
-	if includePurchasePrice {
-		purchase := product.PurchasePrice
-		resp.PurchasePrice = &purchase
+func toProductAdminResponse(product models.Product) dto.ProductAdminResponse {
+	return dto.ProductAdminResponse{
+		ProductResponse: toProductResponse(product),
+		PurchasePrice:   product.PurchasePrice,
 	}
-
-	return resp
 }
