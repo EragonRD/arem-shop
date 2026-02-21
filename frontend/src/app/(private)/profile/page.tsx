@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { getSession } from "@/lib/auth/session";
+import { getSession, saveSession } from "@/lib/auth/session";
 import { useI18n } from "@/lib/i18n/useI18n";
 import { dataClient } from "@/lib/services/dataClient";
 
@@ -46,17 +46,16 @@ export default function ProfilePage() {
                         try {
                             await dataClient.updateShop(session.token, { name, whatsAppNumber });
 
-                            const newSession = {
-                                ...session,
+                            const updatedSession = {
+                                token: session.token,
                                 user: {
                                     ...session.user,
                                     shopName: name,
                                     whatsAppNumber: whatsAppNumber,
                                 }
                             };
-                            localStorage.setItem("arem_user", JSON.stringify(newSession));
+                            saveSession(updatedSession);
                             setSuccess(true);
-                            // Refresh after a short delay so user sees the success message
                             setTimeout(() => window.location.reload(), 800);
                         } catch (err) {
                             setError(err instanceof Error ? err.message : "Erreur lors de la mise à jour");
