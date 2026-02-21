@@ -11,6 +11,7 @@ const navItems = [
   { href: "/products", key: "navProducts" as const },
   { href: "/products/new", key: "navProductsNew" as const },
   { href: "/transactions/new", key: "navTransaction" as const },
+  { href: "/profile", key: "navProfile" as const },
 ];
 
 export function Sidebar() {
