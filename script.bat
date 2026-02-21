@@ -5,7 +5,7 @@ rem ============================================================
 rem Arem Shop API - Endpoint test script (colorized logs)
 rem ============================================================
 
-set "BASE_URL=https://special-barnacle-g4xjw6qv76wvf9pj4-8080.app.github.dev"
+set "BASE_URL=https://laughing-parakeet-jjrvw95pq959fpggw-8080.app.github.dev"
 set "SHOP_ID=11111111-1111-1111-1111-111111111111"
 set "SUPERADMIN_EMAIL=owner@shopdemo.com"
 set "SUPERADMIN_PASSWORD=ChangeMe123!"
