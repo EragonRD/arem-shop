@@ -6,7 +6,7 @@ flowchart TD
     classDef relation fill:none,stroke:none,color:#4a148c,font-style:italic;
 
     %% Nœud central
-    Shop["🛒 MA BOUTIQUE\n(Nom, Numéro WhatsApp, Sous-numéro)"]:::shop
+    Shop["🛒 MA BOUTIQUE\n(Nom, Numéro WhatsApp)"]:::shop
 
     %% Éléments appartenant à la boutique
     Employes["👥 EMPLOYES\n(Gérants, Caissiers)"]:::section

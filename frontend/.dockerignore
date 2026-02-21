@@ -1,3 +1,27 @@
+# Dependencies (reinstalled in container)
 node_modules
+
+# Next.js build output
 .next
+
+# Version control
+.git
+.gitignore
+
+# Documentation
+*.md
+
+# Environment / secrets
+.env
+.env.*
+
+# IDE
+.vscode
+.idea
+
+# Debug logs
 npm-debug.log*
+
+# Misc
+.DS_Store
+*.log

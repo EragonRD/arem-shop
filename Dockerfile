@@ -1,5 +1,7 @@
+# syntax=docker/dockerfile:1
+
 # ── Stage 1 : Build ──────────────────────────────────────────
-FROM golang:1.18-alpine AS builder
+FROM golang:1.22-alpine AS builder
 
 RUN apk add --no-cache git
 
@@ -7,13 +9,16 @@ WORKDIR /src
 
 # Copier les fichiers de dépendances en premier (cache Docker)
 COPY go.mod go.sum ./
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
 # Copier le reste du code source
 COPY . .
 
-# Compiler un binaire statique
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+# Compiler un binaire statique (avec cache de compilation)
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -ldflags="-s -w" -o /bin/arem-shop ./cmd/api
 
 # ── Stage 2 : Run ───────────────────────────────────────────

@@ -1,8 +1,13 @@
+# syntax=docker/dockerfile:1
+
+# ── Stage 1 : Dependencies ──────────────────────────────────
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
+# ── Stage 2 : Build ─────────────────────────────────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -11,14 +16,19 @@ ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 ARG NEXT_PUBLIC_DATA_MODE=mock
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_DATA_MODE=$NEXT_PUBLIC_DATA_MODE
-RUN npm run build
+RUN --mount=type=cache,target=/root/.npm \
+    --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
+# ── Stage 3 : Run (standalone) ───────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.next ./.next
+
+# Copier uniquement le bundle standalone (pas tout node_modules)
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+CMD ["node", "server.js"]

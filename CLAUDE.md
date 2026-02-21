@@ -93,6 +93,7 @@ Auth tokens stored in localStorage as `arem_token` and `arem_user`. On 401, sess
 | `GET/POST /products` | Admin+ | List/create products |
 | `GET/PUT/DELETE /products/:id` | Admin+ | Single product CRUD |
 | `POST /transactions` | Admin+ | Create sale/expense/withdrawal |
+| `PUT /shop` | SuperAdmin | Update shop name and WhatsApp |
 | `GET /reports/dashboard` | SuperAdmin | Financial dashboard |
 | `GET /public/:shopID/products` | Public | Public catalog |
 
