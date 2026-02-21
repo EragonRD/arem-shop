@@ -19,7 +19,9 @@ export function TopNav() {
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between border-b border-brand-border/60 bg-white/75 px-4 py-3 backdrop-blur lg:px-8">
       <div>
-        <p className="font-display text-lg font-semibold text-brand-fg">{t("brand")}</p>
+        <p className="font-display text-lg font-semibold text-brand-fg truncate max-w-[150px]">
+          {user?.shopName || t("brand")}
+        </p>
         <p className="text-xs text-brand-fg/70">
           {t("role")}: {user?.role ?? "-"}
         </p>

@@ -34,7 +34,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         setInitialValues({
           name: product.name,
           description: product.description,
-          category: product.category,
+          categoryID: product.categoryID,
           purchasePrice: product.purchasePrice,
           sellingPrice: product.sellingPrice,
           stock: product.stock,
@@ -74,6 +74,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       {error ? <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
 
       <ProductForm
+        token={session.token}
         role={session.user.role}
         mode="edit"
         initialValues={initialValues}

@@ -24,3 +24,6 @@ func (r *ShopRepository) FindByID(ctx context.Context, shopID uuid.UUID) (*model
 	}
 	return &shop, nil
 }
+func (r *ShopRepository) Update(ctx context.Context, shop *models.Shop) error {
+	return r.db.WithContext(ctx).Save(shop).Error
+}

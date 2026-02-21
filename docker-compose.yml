@@ -14,8 +14,12 @@ services:
       - "${DB_EXTERNAL_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./migrations/000001_init.up.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-      - ./migrations/000002_seed_demo.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      - ./migrations/000001_init.up.sql:/docker-entrypoint-initdb.d/01-init.sql:ro,z
+      - ./migrations/000002_seed_demo.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro,z
+      - ./migrations/000003_add_categories.up.sql:/docker-entrypoint-initdb.d/03-add-categories.sql:ro,z
+      - ./migrations/000004_seed_second_shop.sql:/docker-entrypoint-initdb.d/04-seed-second-shop.sql:ro,z
+      - ./migrations/000005_add_shop_subnumber.up.sql:/docker-entrypoint-initdb.d/05-add-shop-subnumber.sql:ro,z
+      - ./migrations/000006_remove_shop_subnumber.up.sql:/docker-entrypoint-initdb.d/06-remove-shop-subnumber.sql:ro,z
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-arem_shop}"]
       interval: 5s
@@ -37,6 +41,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - arem-shop_uploads:/app/uploads
 
   frontend:
     build:
@@ -55,3 +61,4 @@ services:
 
 volumes:
   pgdata:
+  arem-shop_uploads:

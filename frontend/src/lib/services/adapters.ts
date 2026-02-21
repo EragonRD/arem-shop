@@ -12,6 +12,7 @@ type ApiProduct = {
   id: string;
   name: string;
   description: string;
+  categoryID: string;
   category: string;
   purchasePrice?: string | number;
   sellingPrice: string | number;
@@ -52,6 +53,7 @@ export function toProductViewModel(product: ApiProduct): ProductViewModel {
     id: product.id,
     name: product.name,
     description: product.description,
+    categoryID: product.categoryID,
     category: product.category,
     purchasePrice: product.purchasePrice !== undefined ? toNumber(product.purchasePrice) : undefined,
     sellingPrice: toNumber(product.sellingPrice),
@@ -89,7 +91,7 @@ export function toProductPayload(role: UserRole, payload: ProductCreatePayload |
   const basePayload: Record<string, unknown> = {
     name: payload.name,
     description: payload.description,
-    category: payload.category,
+    categoryID: payload.categoryID,
     sellingPrice: payload.sellingPrice,
     stock: payload.stock,
     imageURL: payload.imageURL,

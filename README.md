@@ -283,6 +283,8 @@ Routes privees passent par:
 | POST | `/transactions` | Admin, SuperAdmin | Creer transaction (Sale/Expense/Withdrawal) |
 | GET | `/reports/dashboard` | SuperAdmin | Dashboard financier shop JWT |
 | GET | `/public/:shopID/products` | Public | Catalogue public du shop |
+| POST | `/upload` | Admin, SuperAdmin | Uploader une image (multipart) et recuperer l'url absolue |
+| GET | `/uploads/*` | Public | Servir les fichiers statiques des images uploadées |
 
 ## 12) Usage API detaille
 

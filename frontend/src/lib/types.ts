@@ -7,6 +7,8 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   shopID: string;
+  shopName: string;
+  whatsAppNumber: string;
   createdAt: string;
 }
 
@@ -25,10 +27,16 @@ export interface JwtClaims {
   iat?: number;
 }
 
+export interface CategoryViewModel {
+  id: string;
+  name: string;
+}
+
 export interface ProductViewModel {
   id: string;
   name: string;
   description: string;
+  categoryID: string;
   category: string;
   purchasePrice?: number;
   sellingPrice: number;
@@ -41,14 +49,14 @@ export interface ProductViewModel {
 export interface ProductCreatePayload {
   name: string;
   description: string;
-  category: string;
+  categoryID: string;
   purchasePrice?: number;
   sellingPrice: number;
   stock: number;
   imageURL: string;
 }
 
-export interface ProductUpdatePayload extends ProductCreatePayload {}
+export interface ProductUpdatePayload extends ProductCreatePayload { }
 
 export interface DashboardViewModel {
   totalSales: number;

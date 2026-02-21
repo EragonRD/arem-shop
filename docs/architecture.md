@@ -201,6 +201,7 @@ erDiagram
 | `GET`   | `/health`                    | Health check           |
 | `POST`  | `/auth/login`                | Connexion (retourne JWT) |
 | `GET`   | `/public/:shopID/products`   | Catalogue public       |
+| `GET`   | `/uploads/*`                 | Fichiers images statiques|
 
 ### Protégés — SuperAdmin + Admin
 | Méthode  | Route              | Description            |
@@ -210,6 +211,7 @@ erDiagram
 | `PUT`    | `/products/:id`    | Modifier un produit    |
 | `DELETE` | `/products/:id`    | Supprimer un produit   |
 | `POST`   | `/transactions`    | Créer une transaction  |
+| `POST`   | `/upload`          | Upload d'une image     |
 
 ### Protégés — SuperAdmin uniquement
 | Méthode | Route                 | Description                |

@@ -20,12 +20,14 @@ type LoginRequest struct {
 
 // AuthUserResponse est la representation utilisateur renvoyee au client.
 type AuthUserResponse struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
-	ShopID    string    `json:"shopID"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID            string    `json:"id"`
+	Name          string    `json:"name"`
+	Email         string    `json:"email"`
+	Role          string    `json:"role"`
+	ShopID        string    `json:"shopID"`
+	ShopName      string    `json:"shopName"`
+	WhatsAppNumber string   `json:"whatsAppNumber"`
+	CreatedAt     time.Time `json:"createdAt"`
 }
 
 // LoginResponse expose le token JWT et les informations utilisateur.

@@ -9,6 +9,7 @@ import {
 import type { DataClient } from "@/lib/services/types";
 import type {
   AuthSession,
+  CategoryViewModel,
   DashboardViewModel,
   ProductCreatePayload,
   ProductUpdatePayload,
@@ -115,6 +116,12 @@ export const apiClient: DataClient = {
     return toDashboardViewModel(payload);
   },
 
+  async listCategories(token: string): Promise<CategoryViewModel[]> {
+    const payload = await request<ProductEnvelope<unknown[]>>("/categories", { method: "GET" }, token);
+    const data = parseEnvelope(payload);
+    return data as CategoryViewModel[];
+  },
+
   async listProducts(token: string, _role: UserRole): Promise<ProductViewModel[]> {
     const payload = await request<ProductEnvelope<unknown[]>>("/products", { method: "GET" }, token);
     const data = parseEnvelope(payload);
@@ -182,5 +189,53 @@ export const apiClient: DataClient = {
     const payload = await request<ProductEnvelope<unknown[]>>(`/public/${shopID}/products`, { method: "GET" });
     const data = parseEnvelope(payload);
     return data.map((product) => toPublicProductViewModel(product as never));
+  },
+
+  async uploadImage(token: string, file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const headers = new Headers();
+    headers.set("Authorization", `Bearer ${token}`);
+
+    const response = await fetch(`${API_BASE_URL}/upload`, {
+      method: "POST",
+      body: formData,
+      headers,
+    });
+
+    const text = await response.text();
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(text);
+    } catch { }
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        handleUnauthorized();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("arem:unauthorized"));
+        }
+      }
+      throw new ApiError(response.status, extractErrorMessage(parsed, "upload failed"));
+    }
+
+    const envelope = parsed as ProductEnvelope<{ url: string }>;
+    if (!envelope.success || !envelope.data) {
+      throw new ApiError(500, envelope.error ?? "invalid upload response");
+    }
+
+    return envelope.data;
+  },
+
+  async updateShop(token: string, payload: { name: string; whatsAppNumber?: string }): Promise<void> {
+    await request<unknown>(
+      "/shop",
+      {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      },
+      token,
+    );
   },
 };

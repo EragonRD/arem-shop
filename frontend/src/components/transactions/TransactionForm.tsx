@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { useI18n } from "@/lib/i18n/useI18n";
 import type { ProductViewModel, TransactionPayload, TransactionType } from "@/lib/types";
@@ -13,11 +13,18 @@ interface TransactionFormProps {
 export function TransactionForm({ products, onSubmit }: TransactionFormProps) {
   const { t } = useI18n();
   const [type, setType] = useState<TransactionType>("Sale");
-  const [productID, setProductID] = useState(products[0]?.id ?? "");
+  const [productID, setProductID] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [amount, setAmount] = useState(0);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Initialize productID when products become available
+  useEffect(() => {
+    if (!productID && products.length > 0) {
+      setProductID(products[0].id);
+    }
+  }, [products, productID]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

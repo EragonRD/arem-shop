@@ -21,6 +21,7 @@ func NewProductRepository(db *gorm.DB) *ProductRepository {
 func (r *ProductRepository) ListByShopID(ctx context.Context, shopID uuid.UUID) ([]models.Product, error) {
 	var products []models.Product
 	err := r.db.WithContext(ctx).
+		Preload("Category").
 		Where("shop_id = ?", shopID).
 		Order("created_at DESC").
 		Find(&products).Error
@@ -34,6 +35,7 @@ func (r *ProductRepository) ListByShopID(ctx context.Context, shopID uuid.UUID) 
 func (r *ProductRepository) FindByIDAndShopID(ctx context.Context, productID, shopID uuid.UUID) (*models.Product, error) {
 	var product models.Product
 	err := r.db.WithContext(ctx).
+		Preload("Category").
 		Where("id = ? AND shop_id = ?", productID, shopID).
 		First(&product).Error
 	if err != nil {
@@ -54,7 +56,7 @@ func (r *ProductRepository) Save(ctx context.Context, product *models.Product) e
 		Updates(map[string]interface{}{
 			"name":           product.Name,
 			"description":    product.Description,
-			"category":       product.Category,
+			"category_id":    product.CategoryID,
 			"purchase_price": product.PurchasePrice,
 			"selling_price":  product.SellingPrice,
 			"stock":          product.Stock,
@@ -79,6 +81,7 @@ func (r *ProductRepository) FindByIDAndShopIDForUpdate(ctx context.Context, tx *
 	var product models.Product
 	err := execDB.WithContext(ctx).
 		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Preload("Category").
 		Where("id = ? AND shop_id = ?", productID, shopID).
 		First(&product).Error
 	if err != nil {
@@ -100,7 +103,7 @@ func (r *ProductRepository) SaveWithTx(ctx context.Context, tx *gorm.DB, product
 		Updates(map[string]interface{}{
 			"name":           product.Name,
 			"description":    product.Description,
-			"category":       product.Category,
+			"category_id":    product.CategoryID,
 			"purchase_price": product.PurchasePrice,
 			"selling_price":  product.SellingPrice,
 			"stock":          product.Stock,

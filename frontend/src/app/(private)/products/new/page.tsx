@@ -20,6 +20,7 @@ export default function NewProductPage() {
     <section className="space-y-4">
       <h1 className="font-display text-3xl font-semibold text-brand-fg">{t("productsCreate")}</h1>
       <ProductForm
+        token={session.token}
         role={session.user.role}
         mode="create"
         onSubmit={async (payload) => {
