@@ -167,7 +167,7 @@ Reference: `config/.env.example`.
 - `APP_NAME` nom app
 - `APP_ENV` environment (`development`, `production`, ...)
 - `APP_PORT` port HTTP
-- `CORS_ALLOWED_ORIGINS` liste des origins frontend autorisees (CSV)
+- `CORS_ALLOWED_ORIGINS` liste des origins frontend autorisees (CSV), ex: `http://localhost:3000,https://*.app.github.dev`
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSLMODE`, `DB_TIMEZONE`
 - `JWT_SECRET` secret de signature JWT (obligatoire)
 - `JWT_TTL_HOURS` duree de vie token

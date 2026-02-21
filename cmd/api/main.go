@@ -30,14 +30,16 @@ func main() {
 
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
-	router.Use(cors.New(cors.Config{
+	corsConfig := cors.Config{
 		AllowOrigins:     cfg.CORSAllowedOrigins,
+		AllowWildcard:    true,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
-	}))
+	}
+	router.Use(cors.New(corsConfig))
 
 	shopRepo := repository.NewShopRepository(db)
 	userRepo := repository.NewUserRepository(db)
