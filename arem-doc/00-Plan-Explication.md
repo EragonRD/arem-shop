@@ -24,6 +24,8 @@ Objectif: expliquer l'API multi-tenant Arem Shop de facon progressive, pour qu'u
    Dockerfile multi-stage, docker-compose, cycle de démarrage.
 8. **Guide de tests Docker** ([[08-Guide-Tests-Docker]])  
    Script de test automatisé, flux de test, résultats attendus.
+9. **Workflow IA** ([[09-Workflow-IA]])  
+   Méthodologie d'utilisation des IAs (Claude, Codex, Gemini) et gains de temps générés.
 
 ## Resultat attendu
 
