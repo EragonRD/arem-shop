@@ -1,0 +1,1 @@
+ALTER TABLE shops DROP COLUMN IF EXISTS sub_number;

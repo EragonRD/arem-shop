@@ -45,18 +45,28 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)
 	transactionRepo := repository.NewTransactionRepository(db)
+	categoryRepo := repository.NewCategoryRepository(db)
 
 	authService := services.NewAuthService(cfg, userRepo, shopRepo)
 	productService := services.NewProductService(productRepo)
 	publicService := services.NewPublicService(shopRepo, productRepo)
 	transactionService := services.NewTransactionService(db, productRepo, transactionRepo)
 	reportService := services.NewReportService(transactionRepo, productRepo, cfg.LowStockThreshold)
+	categoryService := services.NewCategoryService(categoryRepo)
+	shopService := services.NewShopService(shopRepo)
+
+	// URL de base exposée dans l'API, utilisée pour construire les URLs d'images retournées
+	baseURL := "http://localhost:8080"
+	uploadService := services.NewUploadService("./uploads", baseURL)
 
 	authHandler := handlers.NewAuthHandler(authService)
 	productHandler := handlers.NewProductHandler(productService)
 	publicHandler := handlers.NewPublicHandler(publicService)
 	transactionHandler := handlers.NewTransactionHandler(transactionService)
 	reportHandler := handlers.NewReportHandler(reportService)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
+	uploadHandler := handlers.NewUploadHandler(uploadService)
+	shopHandler := handlers.NewShopHandler(shopService)
 
 	router.GET("/health", func(c *gin.Context) {
 		sqlDB, dbErr := db.DB()
@@ -90,12 +100,17 @@ func main() {
 		middleware.ShopIsolationMiddleware(),
 		middleware.RoleMiddleware(models.RoleSuperAdmin, models.RoleAdmin),
 	)
+	private.GET("/categories", categoryHandler.List)
 	private.GET("/products", productHandler.List)
 	private.GET("/products/:id", productHandler.GetByID)
 	private.POST("/products", productHandler.Create)
 	private.PUT("/products/:id", productHandler.Update)
 	private.DELETE("/products/:id", productHandler.Delete)
 	private.POST("/transactions", transactionHandler.Create)
+	private.POST("/upload", uploadHandler.UploadProductImage)
+
+	// Servir le dossier './uploads' publiquement via l'URL '/uploads'
+	router.Static("/uploads", "./uploads")
 
 	superAdminPrivate := router.Group("/")
 	superAdminPrivate.Use(
@@ -104,6 +119,7 @@ func main() {
 		middleware.RoleMiddleware(models.RoleSuperAdmin),
 	)
 	superAdminPrivate.GET("/reports/dashboard", reportHandler.Dashboard)
+	superAdminPrivate.PUT("/shop", shopHandler.UpdateShopInfo)
 
 	public := router.Group("/public")
 	public.GET("/:shopID/products", publicHandler.ListPublicProducts)

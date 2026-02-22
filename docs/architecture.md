@@ -28,6 +28,7 @@ arem-shop/
 │   │   ├── product_dto.go       ← DTOs produit (create/update/response)
 │   │   ├── public_product_dto.go← DTOs vitrine publique
 │   │   ├── report_dto.go        ← DTOs dashboard
+│   │   ├── shop_dto.go          ← DTOs mise à jour boutique
 │   │   └── transaction_dto.go   ← DTOs transaction
 │   ├── repository/
 │   │   ├── user_repository.go
@@ -38,12 +39,14 @@ arem-shop/
 │   │   ├── auth_service.go      ← Inscription & login
 │   │   ├── product_service.go   ← CRUD produits
 │   │   ├── public_service.go    ← Catalogue public
+│   │   ├── shop_service.go      ← Mise à jour boutique (nom, WhatsApp)
 │   │   ├── transaction_service.go ← Ventes, dépenses, retraits
 │   │   └── report_service.go    ← Dashboard financier
 │   ├── handlers/
 │   │   ├── auth_handler.go
 │   │   ├── product_handler.go
 │   │   ├── public_handler.go
+│   │   ├── shop_handler.go      ← Mise à jour boutique
 │   │   ├── transaction_handler.go
 │   │   └── report_handler.go
 │   ├── middleware/
@@ -201,6 +204,7 @@ erDiagram
 | `GET`   | `/health`                    | Health check           |
 | `POST`  | `/auth/login`                | Connexion (retourne JWT) |
 | `GET`   | `/public/:shopID/products`   | Catalogue public       |
+| `GET`   | `/uploads/*`                 | Fichiers images statiques|
 
 ### Protégés — SuperAdmin + Admin
 | Méthode  | Route              | Description            |
@@ -210,11 +214,13 @@ erDiagram
 | `PUT`    | `/products/:id`    | Modifier un produit    |
 | `DELETE` | `/products/:id`    | Supprimer un produit   |
 | `POST`   | `/transactions`    | Créer une transaction  |
+| `POST`   | `/upload`          | Upload d'une image     |
 
 ### Protégés — SuperAdmin uniquement
 | Méthode | Route                 | Description                |
 |---------|-----------------------|----------------------------|
 | `POST`  | `/auth/register`      | Enregistrer un utilisateur |
+| `PUT`   | `/shop`               | Modifier nom et WhatsApp   |
 | `GET`   | `/reports/dashboard`  | Dashboard financier        |
 
 ---

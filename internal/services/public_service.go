@@ -68,7 +68,7 @@ func (s *PublicService) ListProductsByShopID(ctx context.Context, shopID string)
 			ID:           product.ID.String(),
 			Name:         product.Name,
 			Description:  product.Description,
-			Category:     product.Category,
+			Category:     product.Category.Name,
 			SellingPrice: product.SellingPrice,
 			Stock:        product.Stock,
 			ImageURL:     product.ImageURL,

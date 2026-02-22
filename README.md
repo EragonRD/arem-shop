@@ -281,8 +281,11 @@ Routes privees passent par:
 | PUT | `/products/:id` | Admin, SuperAdmin | Modifier produit du shop JWT |
 | DELETE | `/products/:id` | Admin, SuperAdmin | Supprimer produit du shop JWT |
 | POST | `/transactions` | Admin, SuperAdmin | Creer transaction (Sale/Expense/Withdrawal) |
+| PUT | `/shop` | SuperAdmin | Modifier nom boutique et numero WhatsApp |
 | GET | `/reports/dashboard` | SuperAdmin | Dashboard financier shop JWT |
 | GET | `/public/:shopID/products` | Public | Catalogue public du shop |
+| POST | `/upload` | Admin, SuperAdmin | Uploader une image (multipart) et recuperer l'url absolue |
+| GET | `/uploads/*` | Public | Servir les fichiers statiques des images uploadées |
 
 ## 12) Usage API detaille
 
@@ -655,7 +658,6 @@ Resultat attendu: `403 Forbidden` avec code `CROSS_SHOP_FORBIDDEN`.
 Le coeur metier principal est present, mais certains modules restent a etendre:
 
 - CRUD complet users
-- Gestion shop (ex: update whatsapp via API)
 - CRUD complet transactions (aujourd'hui `POST` uniquement)
 - OpenAPI complet (le fichier actuel est minimal)
 - Hardening infra: rate limiting, CORS strict, logs structures, CI/CD
@@ -676,6 +678,7 @@ The project now includes a Next.js frontend in `frontend/` with a Rackoon-like v
 - `/products/new`
 - `/products/:id/edit`
 - `/transactions/new`
+- `/profile` (SuperAdmin — modification du nom de la boutique et du numero WhatsApp)
 - `/public/:shopID`
 
 ### 18.2 Local frontend run (without Docker)
@@ -722,3 +725,33 @@ docker compose up --build
 - Public storefront uses `/public/:shopID/products`.
 - No authentication required.
 - Purchase price is never shown.
+
+## 19) Comptes de test et liens
+
+### 19.1 URLs de l'application
+
+| Service | URL |
+|---------|-----|
+| Frontend | `http://localhost:3000` |
+| API | `http://localhost:8080` |
+| Health check | `http://localhost:8080/health` |
+| Vitrine publique Shop 1 | `http://localhost:3000/public/11111111-1111-1111-1111-111111111111` |
+| Vitrine publique Shop 2 | `http://localhost:3000/public/22222222-2222-2222-2222-222222222222` |
+
+### 19.2 Comptes de connexion
+
+| Shop | Email | Mot de passe | Shop ID |
+|------|-------|--------------|---------|
+| Shop 1 (Shop Demo) | `owner@shopdemo.com` | `ChangeMe123!` | `11111111-1111-1111-1111-111111111111` |
+| Shop 2 | `owner2@shopdemo.com` | `Password456!` | `22222222-2222-2222-2222-222222222222` |
+
+### 19.3 Tester les features (apres connexion)
+
+| Feature | Ou tester | Description |
+|---------|-----------|-------------|
+| Dashboard financier | `http://localhost:3000/dashboard` | Affiche Total Sales, Expenses, Net Profit, Low Stock |
+| Catalogue produits | `http://localhost:3000/products` | Liste les produits de la boutique |
+| Creer un produit | `http://localhost:3000/products/new` | Formulaire avec nom, prix, stock, image |
+| Nouvelle transaction | `http://localhost:3000/transactions/new` | Vente (decremente stock) ou depense |
+| Profil boutique | `http://localhost:3000/profile` | Modifier le nom de la boutique et le numero WhatsApp |
+| Vitrine publique | `http://localhost:3000/public/11111111-1111-1111-1111-111111111111` | Catalogue public avec bouton WhatsApp |

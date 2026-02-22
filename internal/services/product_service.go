@@ -108,6 +108,11 @@ func (s *ProductService) Create(ctx context.Context, shopID string, role models.
 	if err := validateProductCreateInput(role, req); err != nil {
 		return nil, err
 	}
+	
+	categoryUUID, err := uuid.Parse(strings.TrimSpace(req.CategoryID))
+	if err != nil {
+		return nil, ErrInvalidProductCategory
+	}
 
 	purchasePrice := decimal.Zero
 	if role == models.RoleSuperAdmin && req.PurchasePrice != nil {
@@ -117,7 +122,7 @@ func (s *ProductService) Create(ctx context.Context, shopID string, role models.
 	product := models.Product{
 		Name:          strings.TrimSpace(req.Name),
 		Description:   strings.TrimSpace(req.Description),
-		Category:      strings.TrimSpace(req.Category),
+		CategoryID:    categoryUUID,
 		PurchasePrice: purchasePrice,
 		SellingPrice:  req.SellingPrice.Round(2),
 		Stock:         req.Stock,
@@ -160,10 +165,15 @@ func (s *ProductService) Update(ctx context.Context, shopID, productID string, r
 	if err := validateProductUpdateInput(role, req); err != nil {
 		return nil, err
 	}
+	
+	categoryUUID, err := uuid.Parse(strings.TrimSpace(req.CategoryID))
+	if err != nil {
+		return nil, ErrInvalidProductCategory
+	}
 
 	existing.Name = strings.TrimSpace(req.Name)
 	existing.Description = strings.TrimSpace(req.Description)
-	existing.Category = strings.TrimSpace(req.Category)
+	existing.CategoryID = categoryUUID
 	existing.SellingPrice = req.SellingPrice.Round(2)
 	existing.Stock = req.Stock
 	existing.ImageURL = strings.TrimSpace(req.ImageURL)
@@ -229,7 +239,7 @@ func validateProductCreateInput(role models.UserRole, req dto.CreateProductReque
 	if strings.TrimSpace(req.Name) == "" {
 		return ErrInvalidProductName
 	}
-	if strings.TrimSpace(req.Category) == "" {
+	if strings.TrimSpace(req.CategoryID) == "" {
 		return ErrInvalidProductCategory
 	}
 	if req.SellingPrice.LessThanOrEqual(decimal.Zero) {
@@ -255,7 +265,7 @@ func validateProductUpdateInput(role models.UserRole, req dto.UpdateProductReque
 	if strings.TrimSpace(req.Name) == "" {
 		return ErrInvalidProductName
 	}
-	if strings.TrimSpace(req.Category) == "" {
+	if strings.TrimSpace(req.CategoryID) == "" {
 		return ErrInvalidProductCategory
 	}
 	if req.SellingPrice.LessThanOrEqual(decimal.Zero) {
@@ -279,7 +289,8 @@ func toProductResponse(product models.Product) dto.ProductResponse {
 		ID:           product.ID.String(),
 		Name:         product.Name,
 		Description:  product.Description,
-		Category:     product.Category,
+		CategoryID:   product.CategoryID.String(),
+		Category:     product.Category.Name,
 		SellingPrice: product.SellingPrice,
 		Stock:        product.Stock,
 		ImageURL:     product.ImageURL,

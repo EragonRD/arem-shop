@@ -10,7 +10,7 @@ import (
 type CreateProductRequest struct {
 	Name          string           `json:"name" binding:"required,min=1,max=160"`
 	Description   string           `json:"description" binding:"max=5000"`
-	Category      string           `json:"category" binding:"required,min=1,max=80"`
+	CategoryID    string           `json:"categoryID" binding:"required,uuid"`
 	PurchasePrice *decimal.Decimal `json:"purchasePrice,omitempty"`
 	SellingPrice  decimal.Decimal  `json:"sellingPrice" binding:"required"`
 	Stock         int              `json:"stock" binding:"required,gte=0"`
@@ -21,7 +21,7 @@ type CreateProductRequest struct {
 type UpdateProductRequest struct {
 	Name          string           `json:"name" binding:"required,min=1,max=160"`
 	Description   string           `json:"description" binding:"max=5000"`
-	Category      string           `json:"category" binding:"required,min=1,max=80"`
+	CategoryID    string           `json:"categoryID" binding:"required,uuid"`
 	PurchasePrice *decimal.Decimal `json:"purchasePrice,omitempty"`
 	SellingPrice  decimal.Decimal  `json:"sellingPrice" binding:"required"`
 	Stock         int              `json:"stock" binding:"required,gte=0"`
@@ -33,6 +33,7 @@ type ProductResponse struct {
 	ID           string          `json:"id"`
 	Name         string          `json:"name"`
 	Description  string          `json:"description"`
+	CategoryID   string          `json:"categoryID"`
 	Category     string          `json:"category"`
 	SellingPrice decimal.Decimal `json:"sellingPrice"`
 	Stock        int             `json:"stock"`

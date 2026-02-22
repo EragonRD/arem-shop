@@ -104,7 +104,7 @@ func (s *AuthService) Register(ctx context.Context, req dto.RegisterRequest, act
 		return nil, err
 	}
 
-	resp := toAuthUserResponse(user)
+	resp := toAuthUserResponse(user, *shop)
 	return &resp, nil
 }
 
@@ -144,18 +144,20 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Log
 
 	resp := &dto.LoginResponse{
 		Token: token,
-		User:  toAuthUserResponse(*user),
+		User:  toAuthUserResponse(*user, *shop),
 	}
 	return resp, nil
 }
 
-func toAuthUserResponse(user models.User) dto.AuthUserResponse {
+func toAuthUserResponse(user models.User, shop models.Shop) dto.AuthUserResponse {
 	return dto.AuthUserResponse{
-		ID:        user.ID.String(),
-		Name:      user.Name,
-		Email:     user.Email,
-		Role:      string(user.Role),
-		ShopID:    user.ShopID.String(),
-		CreatedAt: user.CreatedAt,
+		ID:            user.ID.String(),
+		Name:          user.Name,
+		Email:         user.Email,
+		Role:          string(user.Role),
+		ShopID:        user.ShopID.String(),
+		ShopName:      shop.Name,
+		WhatsAppNumber: shop.WhatsAppNumber,
+		CreatedAt:     user.CreatedAt,
 	}
 }

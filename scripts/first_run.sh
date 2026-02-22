@@ -117,7 +117,9 @@ SHOPS_TABLE_EXISTS="$(psql "$APP_DB_CONN" -tAc "SELECT to_regclass('public.shops
 if [[ "$SHOPS_TABLE_EXISTS" != "t" ]]; then
   log "Applying initial migration..."
   psql "$APP_DB_CONN" -f "$MIGRATION_FILE" >/dev/null
-  log "Migration applied"
+  log "Applying categories migration..."
+  psql "$APP_DB_CONN" -f "$ROOT_DIR/migrations/000003_add_categories.up.sql" >/dev/null
+  log "Migrations applied"
 else
   log "Schema already initialized, skipping migration"
 fi

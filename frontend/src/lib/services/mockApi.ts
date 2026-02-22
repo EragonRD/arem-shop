@@ -10,6 +10,7 @@ import type {
   PublicProductViewModel,
   TransactionPayload,
   UserRole,
+  CategoryViewModel,
 } from "@/lib/types";
 import type { DataClient } from "@/lib/services/types";
 
@@ -62,7 +63,7 @@ function validateProductPayload(
   if (!payload.name.trim()) {
     throw new Error("name is required");
   }
-  if (!payload.category.trim()) {
+  if (!payload.categoryID.trim()) {
     throw new Error("category is required");
   }
   if (payload.sellingPrice <= 0) {
@@ -135,6 +136,8 @@ export const mockApiClient: DataClient = {
         email,
         role,
         shopID,
+        shopName: "Demo Shop",
+        whatsAppNumber: "+212600000000",
         createdAt: new Date().toISOString(),
       },
     };
@@ -143,6 +146,15 @@ export const mockApiClient: DataClient = {
   async getDashboard(_token: string): Promise<DashboardViewModel> {
     await delay();
     return computeDashboard();
+  },
+
+  async listCategories(_token: string): Promise<CategoryViewModel[]> {
+    await delay();
+    return [
+      { id: "22222222-2222-2222-2222-222222222222", name: "Laptops" },
+      { id: "33333333-3333-3333-3333-333333333333", name: "Smartphones" },
+      { id: "44444444-4444-4444-4444-444444444444", name: "Audio" },
+    ];
   },
 
   async listProducts(_token: string, role: UserRole): Promise<ProductViewModel[]> {
@@ -174,7 +186,8 @@ export const mockApiClient: DataClient = {
       id: `p-${Date.now()}`,
       name: payload.name.trim(),
       description: payload.description.trim(),
-      category: payload.category.trim(),
+      category: "Mocked Category",
+      categoryID: payload.categoryID.trim(),
       purchasePrice: role === "SuperAdmin" ? payload.purchasePrice : 0,
       sellingPrice: payload.sellingPrice,
       stock: payload.stock,
@@ -207,7 +220,7 @@ export const mockApiClient: DataClient = {
       ...existing,
       name: payload.name.trim(),
       description: payload.description.trim(),
-      category: payload.category.trim(),
+      categoryID: payload.categoryID.trim(),
       sellingPrice: payload.sellingPrice,
       stock: payload.stock,
       imageURL: payload.imageURL.trim(),
@@ -267,18 +280,30 @@ export const mockApiClient: DataClient = {
     mockTransactions.push(payload);
   },
 
-  async listPublicProducts(_shopID: string): Promise<PublicProductViewModel[]> {
+  async listPublicProducts(shopID: string): Promise<PublicProductViewModel[]> {
     await delay();
+    return products
+      .filter((p) => p.shopID === shopID)
+      .map((product) => ({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        category: product.category,
+        sellingPrice: product.sellingPrice,
+        stock: product.stock,
+        imageURL: product.imageURL,
+        whatsappLink: `https://wa.me/212600000000?text=Bonjour%20je%20veux%20plus%20d%27information%20sur%20${encodeURIComponent(product.name)}`,
+      }));
+  },
 
-    return products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      category: product.category,
-      sellingPrice: product.sellingPrice,
-      stock: product.stock,
-      imageURL: product.imageURL,
-      whatsappLink: `https://wa.me/212600000000?text=Bonjour%20je%20veux%20plus%20d%27information%20sur%20${encodeURIComponent(product.name)}`,
-    }));
+  async uploadImage(_token: string, file: File): Promise<{ url: string }> {
+    await delay(1500); // Simulate upload latency
+    // Return a fake URL based loosely on the file name for demonstration
+    return { url: `https://via.placeholder.com/800x600?text=${encodeURIComponent(file.name)}` };
+  },
+
+  async updateShop(_token: string, payload: { name: string; whatsAppNumber?: string }): Promise<void> {
+    await delay();
+    return new Promise((resolve) => Object.assign({}, payload, resolve()));
   },
 };
