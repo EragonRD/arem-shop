@@ -14,6 +14,9 @@ Ce dossier est un mini-vault Obsidian pour comprendre l'API Arem Shop de A a Z.
 4. [[04-Flux-Metier-Critiques]]
 5. [[05-Contrats-API]]
 6. [[06-Runbook-Technique]]
+7. [[07-Docker-Deployment]]
+8. [[08-Guide-Tests-Docker]]
+9. [[09-Workflow-IA]]
 
 ## Schema de navigation
 

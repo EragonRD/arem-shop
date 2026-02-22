@@ -1,5 +1,13 @@
 # Arem Shop API
 
+**Groupe 1 :**
+- Alex-Gabriel CHITU
+- Enzo Toni REALE
+- Mattew VENET
+- Rabah Amir Debbah
+
+🎥 **Vidéo de démonstration :** [Insérer le lien YouTube ici]
+
 API REST multi-tenant pour la gestion de boutiques d'electronique.
 
 ## 1) But du projet
