@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "mermaid/architecture-globale.md",
-                "mode": "preview",
+                "file": "09-Workflow-IA.md",
+                "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "architecture-globale"
+              "title": "09-Workflow-IA"
             }
           }
         ],
@@ -200,9 +200,19 @@
   },
   "active": "c66442b99b2ccf54",
   "lastOpenFiles": [
-    "03-Modele-Donnees.md",
+    "08-Guide-Tests-Docker.md",
+    "mermaid/erd.md",
+    "mermaid/pipeline-securite.md",
+    "mermaid/plan-explication.md",
+    "mermaid/sequence-login.md",
+    "mermaid/sequence-public-catalog.md",
+    "mermaid/sequence-transaction-sale.md",
+    "schemas/erd.png",
     "schemas/architecture-globale.png",
+    "images/repartition-hd.png",
+    "images/workflow-hd.png",
     "mermaid/architecture-globale.md",
+    "03-Modele-Donnees.md",
     "02-Architecture-API.md",
     "01-Vue-Produit.md",
     "00-Plan-Explication.md",
@@ -211,13 +221,9 @@
     "schemas/sequence-login.png",
     "schemas/pipeline-securite.png",
     "schemas/plan-explication.png",
-    "schemas/erd.png",
     "mermaid/docker-infrastructure.md",
-    "mermaid/erd.md",
-    "mermaid/pipeline-securite.md",
     "04-Flux-Metier-Critiques.md",
     "07-Docker-Deployment.md",
-    "08-Guide-Tests-Docker.md",
     "06-Runbook-Technique.md",
     "05-Contrats-API.md",
     "README.md"
